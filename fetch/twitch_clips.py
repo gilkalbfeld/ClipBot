@@ -8,12 +8,14 @@ CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 # Twitch category names. GTA VI gets picked up once it exists.
 GAME_NAMES = ["Grand Theft Auto VI", "Grand Theft Auto V"]
 
-# Big streamers: we always check their clips (edit this list anytime)
+# Big streamers: we always check their clips (edit anytime)
 FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross"]
 FAMOUS_ANY_GAME = True  # False = only their GTA clips
 
-MIN_VIEWS = 500
-MAX_SECONDS = 60
+LANGUAGE = "en"      # "en" = English only
+MIN_VIEWS = 1000     # raise to be pickier
+MAX_SECONDS = 60     # short clips only
+PAGES = 3            # more pages = bigger pool of clips
 
 
 def get_token():
@@ -49,8 +51,41 @@ def get_user_id(login, headers):
     return data[0]["id"] if data else None
 
 
+def fetch_clips(params, headers):
+    """Gets several pages of clips for one search."""
+    clips = []
+    cursor = None
+    for _ in range(PAGES):
+        p = dict(params)
+        p["first"] = 100
+        if cursor:
+            p["after"] = cursor
+        r = requests.get(
+            "https://api.twitch.tv/helix/clips", headers=headers, params=p
+        )
+        r.raise_for_status()
+        j = r.json()
+        clips.extend(j.get("data", []))
+        cursor = j.get("pagination", {}).get("cursor")
+        if not cursor:
+            break
+    return clips
+
+
 def keep(c):
-    return c["view_count"] >= MIN_VIEWS and c["duration"] <= MAX_SECONDS
+    return (
+        c["view_count"] >= MIN_VIEWS
+        and c["duration"] <= MAX_SECONDS
+        and c.get("language") == LANGUAGE
+    )
+
+
+def add_score(c):
+    """Views per hour since the clip was made = how fast it's blowing up."""
+    created = datetime.fromisoformat(c["created_at"].replace("Z", "+00:00"))
+    hours = max((datetime.now(timezone.utc) - created).total_seconds() / 3600, 1)
+    c["score"] = round(c["view_count"] / hours, 1)
+    return c
 
 
 def get_clips(days=3, limit=50):
@@ -69,13 +104,7 @@ def get_clips(days=3, limit=50):
             print(f"Category not found yet: {name}")
             continue
         game_ids.append(gid)
-        r = requests.get(
-            "https://api.twitch.tv/helix/clips",
-            headers=headers,
-            params={"game_id": gid, "started_at": since, "first": 100},
-        )
-        r.raise_for_status()
-        for c in r.json().get("data", []):
+        for c in fetch_clips({"game_id": gid, "started_at": since}, headers):
             if keep(c):
                 found[c["id"]] = c
 
@@ -85,22 +114,17 @@ def get_clips(days=3, limit=50):
         if not uid:
             print(f"Streamer not found: {login}")
             continue
-        r = requests.get(
-            "https://api.twitch.tv/helix/clips",
-            headers=headers,
-            params={"broadcaster_id": uid, "started_at": since, "first": 50},
-        )
-        r.raise_for_status()
-        for c in r.json().get("data", []):
+        for c in fetch_clips({"broadcaster_id": uid, "started_at": since}, headers):
             if not keep(c):
                 continue
             if FAMOUS_ANY_GAME or c["game_id"] in game_ids:
                 found[c["id"]] = c
 
-    clips = sorted(found.values(), key=lambda c: c["view_count"], reverse=True)
+    clips = [add_score(c) for c in found.values()]
+    clips.sort(key=lambda c: c["score"], reverse=True)
     return clips[:limit]
 
 
 if __name__ == "__main__":
-    for c in get_clips()[:10]:
-        print(c["view_count"], c["broadcaster_name"], c["title"], c["url"])
+    for c in get_clips()[:15]:
+        print(c["score"], c["view_count"], c["broadcaster_name"], c["title"], c["url"])
