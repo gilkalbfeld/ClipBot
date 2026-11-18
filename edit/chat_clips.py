@@ -1,10 +1,15 @@
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import json
 import os
 import re
 import subprocess
+import sys
 from collections import Counter
+
+sys.path.insert(
+    0,
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 from faster_whisper import WhisperModel
 from edit.editor import make_vertical
@@ -71,7 +76,6 @@ def find_moments(comments):
             )
 
     candidates.sort(reverse=True)
-
     picked = []
 
     for score, timestamp, count in candidates:
@@ -145,7 +149,6 @@ def main():
         )
 
         os.remove(raw)
-
         print("Finished:", output)
 
 
