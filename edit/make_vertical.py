@@ -1,79 +1,108 @@
-
+import json
 import os
-import sys
 import random
+import subprocess
+import sys
 
-sys.path.insert(
-    0,
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from faster_whisper import WhisperModel
 from fetch.twitch_clips import get_clips
-from edit.download import download
-from edit.editor import make_vertical
+from edit.download import download, has_audio
 
 OUT_DIR = "output"
 HOW_MANY = 3
 
-LAYOUTS = ["blur", "fill", "bars"]
-CAPTION_WORDS = [2, 3, 4]
+# Options the bot is allowed to test. Add more anytime.
+LAYOUTS = {
+    "blur": (
+        "[0:v]split=2[bg][fg];"
+        "[bg]scale=1080:1920:force_original_aspect_ratio=increase,"
+        "crop=1080:1920,boxblur=20:5[bgb];"
+        "[fg]scale=1080:-2[fgs];"
+        "[bgb][fgs]overlay=(W-w)/2:(H-h)/2"
+    ),
+    "fill": "[0:v]scale=-2:1920,crop=1080:1920",
+    "bars": "[0:v]scale=1080:-2,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black",
+}
+CAPTION_WORDS = [2, 3, 4]  # words shown at a time
 
 
-def main():
-    os.makedirs(OUT_DIR, exist_ok=True)
+def fmt(t):
+    h = int(t // 3600)
+    m = int(t % 3600 // 60)
+    s = int(t % 60)
+    ms = int((t - int(t)) * 1000)
+    return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
-    model = WhisperModel(
-        "base",
-        device="cpu",
-        compute_type="int8"
-    )
 
-    clips = get_clips()[:HOW_MANY]
+def make_srt(model, video, srt_path, words_per):
+    segments, _ = model.transcribe(video, word_timestamps=True)
+    words = [w for seg in segments for w in (seg.words or [])]
+    if not words:
+        return False
+    lines = []
+    for i in range(0, len(words), words_per):
+        chunk = words[i : i + words_per]
+        text = " ".join(w.word.strip() for w in chunk).upper()
+        lines.append(f"{len(lines) + 1}\n{fmt(chunk[0].start)} --> {fmt(chunk[-1].end)}\n{text}\n")
+    with open(srt_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    return True
 
-    for clip in clips:
-        print(
-            "Working on:",
-            clip["broadcaster_name"],
-            "-",
-            clip["title"]
+
+def make_vertical(video, srt_path, out_path, has_caps, layout):
+    chain = LAYOUTS[layout]
+    if has_caps:
+        style = (
+            "FontSize=64,Bold=1,Outline=4,Shadow=0,"
+            "PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
+            "Alignment=2,MarginV=420"
         )
-
-        src = download(clip)
-
-        if not src:
-            print("Download failed, skipping")
-            continue
-
-        layout = random.choice(LAYOUTS)
-        words_per = random.choice(CAPTION_WORDS)
-
-        output = os.path.join(
-            OUT_DIR,
-            f"{clip['id']}_vertical.mp4"
-        )
-
-        metadata = {
-            "source_type": "twitch_clip",
-            "title": clip["title"],
-            "streamer": clip["broadcaster_name"],
-            "source_url": clip["url"],
-            "views": clip["view_count"],
-            "viral_score": clip["score"],
-            "credit": f"Clip from twitch.tv/{clip['broadcaster_name']}"
-        }
-
-        make_vertical(
-            video=src,
-            output=output,
-            model=model,
-            metadata=metadata,
-            layout=layout,
-            words_per=words_per
-        )
-
-        print("Finished:", output)
+        chain += f",subtitles={srt_path}:original_size=1080x1920:force_style='{style}'"
+    chain += "[v]"
+    cmd = [
+        "ffmpeg", "-y", "-i", video,
+        "-filter_complex", chain,
+        "-map", "[v]", "-map", "0:a?",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+        "-c:a", "aac", "-b:a", "128k",
+        "-t", "60", out_path,
+    ]
+    subprocess.run(cmd, check=True)
 
 
 if __name__ == "__main__":
-    main()
+    os.makedirs(OUT_DIR, exist_ok=True)
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+
+    for clip in get_clips()[:HOW_MANY]:
+        print("Working on:", clip["broadcaster_name"], "-", clip["title"])
+        src = download(clip)
+        if not src:
+            print("  download failed, skipping")
+            continue
+
+        # Pick this video's random options
+        layout = random.choice(list(LAYOUTS))
+        words_per = random.choice(CAPTION_WORDS)
+
+        srt = os.path.join(OUT_DIR, f"{clip['id']}.srt")
+        has_caps = make_srt(model, src, srt, words_per)
+        out = os.path.join(OUT_DIR, f"{clip['id']}_vertical.mp4")
+        make_vertical(src, srt, out, has_caps, layout)
+
+        info = {
+            "title": clip["title"],
+            "streamer": clip["broadcaster_name"],
+            "credit": f"Clip from twitch.tv/{clip['broadcaster_name']}",
+            "source_url": clip["url"],
+            "views": clip["view_count"],
+            "viral_score": clip["score"],
+            "captions": has_caps,
+            "layout": layout,
+            "caption_words": words_per,
+        }
+        with open(os.path.join(OUT_DIR, f"{clip['id']}.json"), "w") as f:
+            json.dump(info, f, indent=2)
+        print("  done:", out, "| layout:", layout, "| words:", words_per)

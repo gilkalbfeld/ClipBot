@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import shutil
@@ -8,108 +7,55 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-sys.path.insert(
-    0,
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
-
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fetch.twitch_clips import get_token, CLIENT_ID
 
+# Twitch login names (the part after twitch.tv/). Fix any that are wrong.
 STREAMERS = [
-    "kaicenat", "ishowspeed", "caseoh_", "jynxzi",
-    "xqc", "ninja", "lacy", "marlon"
+    "kaicenat", "ishowspeed", "caseoh_", "jynxzi", "xqc", "ninja",
+    "lacy", "marlon",
 ]
-
-HOURS_BACK = 30
-MIN_VOD_MINUTES = 60
-MAX_VODS = 4
-KEYWORDS = []
-
-PROCESSED_FILE = "processed_vods.json"
+HOURS_BACK = 30       # only VODs from the last 30 hours
+MIN_VOD_MINUTES = 60  # skip short streams
+KEYWORDS = []         # e.g. ["gta", "rp"] to only take VODs with these in the title
+MAX_VODS = 4          # cap per run so it fits the free minutes
 
 
-def minutes(duration):
-    match = re.fullmatch(
-        r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?",
-        duration
-    )
-
-    if not match:
-        return 0
-
-    hours, mins, secs = (int(x or 0) for x in match.groups())
-    return hours * 60 + mins + secs / 60
-
-
-def load_processed():
-    if not os.path.exists(PROCESSED_FILE):
-        return []
-
-    with open(PROCESSED_FILE, encoding="utf-8") as file:
-        return json.load(file)
-
-
-def save_processed(processed):
-    with open(PROCESSED_FILE, "w", encoding="utf-8") as file:
-        json.dump(processed, file, indent=2)
+def minutes(dur):
+    m = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur)
+    h, mi, s = (int(x or 0) for x in m.groups())
+    return h * 60 + mi + s / 60
 
 
 def main():
     headers = {
         "Client-Id": CLIENT_ID,
-        "Authorization": f"Bearer {get_token()}"
+        "Authorization": f"Bearer {get_token()}",
     }
-
-    processed = load_processed()
     cutoff = datetime.now(timezone.utc) - timedelta(hours=HOURS_BACK)
     picked = []
 
     for login in STREAMERS:
-        response = requests.get(
-            "https://api.twitch.tv/helix/users",
-            headers=headers,
-            params={"login": login}
-        )
-        response.raise_for_status()
-        users = response.json().get("data", [])
-
-        if not users:
+        u = requests.get(
+            "https://api.twitch.tv/helix/users", headers=headers, params={"login": login}
+        ).json().get("data", [])
+        if not u:
             print("Streamer not found:", login)
             continue
-
-        response = requests.get(
+        vids = requests.get(
             "https://api.twitch.tv/helix/videos",
             headers=headers,
-            params={
-                "user_id": users[0]["id"],
-                "type": "archive",
-                "first": 5
-            }
-        )
-        response.raise_for_status()
-
-        for video in response.json().get("data", []):
-            vod_id = video["id"]
-            created = datetime.fromisoformat(
-                video["created_at"].replace("Z", "+00:00")
-            )
-
-            if vod_id in processed:
+            params={"user_id": u[0]["id"], "type": "archive", "first": 5},
+        ).json().get("data", [])
+        for v in vids:
+            created = datetime.fromisoformat(v["created_at"].replace("Z", "+00:00"))
+            if created < cutoff or minutes(v["duration"]) < MIN_VOD_MINUTES:
                 continue
-            if created < cutoff:
+            if KEYWORDS and not any(k in v["title"].lower() for k in KEYWORDS):
                 continue
-            if minutes(video["duration"]) < MIN_VOD_MINUTES:
-                continue
-            if KEYWORDS and not any(
-                word.lower() in video["title"].lower()
-                for word in KEYWORDS
-            ):
-                continue
-
-            picked.append((login, video))
-            print("Picked:", login, "|", video["title"])
+            picked.append((login, v))
+            print("Picked:", login, "|", v["title"], "|", v["duration"])
             break
-
         if len(picked) >= MAX_VODS:
             break
 
@@ -118,31 +64,17 @@ def main():
         return
 
     os.makedirs("all", exist_ok=True)
-
-    for login, video in picked:
-        vod_id = video["id"]
-        print("Processing:", login, video["url"])
-
-        env = dict(os.environ, VOD=video["url"])
-        result = subprocess.run(
-            [sys.executable, "edit/chat_clips.py"],
-            env=env
-        )
-
-        if result.returncode != 0:
-            print("Processing failed:", vod_id)
+    for login, v in picked:
+        print("=== Processing", login, v["url"])
+        env = dict(os.environ, VOD=v["url"])
+        r = subprocess.run([sys.executable, "edit/chat_clips.py"], env=env)
+        if r.returncode != 0:
+            print("  failed, moving on")
             continue
-
-        destination = f"all/{login}_{vod_id}"
-
+        dest = f"all/{login}_{v['id']}"
         if os.path.isdir("output"):
-            if os.path.exists(destination):
-                shutil.rmtree(destination)
-            shutil.move("output", destination)
-
-        processed.append(vod_id)
-        save_processed(processed)
-        print("Saved:", destination)
+            shutil.move("output", dest)
+            print("  saved to", dest)
 
 
 if __name__ == "__main__":
