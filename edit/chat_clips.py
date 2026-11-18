@@ -30,8 +30,15 @@ def find_vod_id(text):
 
 def get_chat(vod_id):
     subprocess.run(
-        [TDL, "chatdownload", "--id", vod_id, "-o", "chat.json"], check=True
-    )
+    [
+        "tdl/TwitchDownloaderCLI",
+        "chatdownload",
+        "--id", vod_id,
+        "-o", "chat.json",
+        "--collision", "Overwrite"
+    ],
+    check=True
+)
     with open("chat.json", encoding="utf-8") as f:
         return json.load(f)["comments"]
 
