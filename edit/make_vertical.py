@@ -1,6 +1,12 @@
 
 import os
+import sys
 import random
+
+sys.path.insert(
+    0,
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 from faster_whisper import WhisperModel
 from fetch.twitch_clips import get_clips
