@@ -93,6 +93,7 @@ def make_ass(model, video, path):
     return True
 
 
+
 def make_vertical(video, ass_path, out_path, has_caps):
     chain = (
         "[0:v]split=2[bg][fg];"
@@ -104,8 +105,63 @@ def make_vertical(video, ass_path, out_path, has_caps):
     if has_caps:
         chain += f",ass={ass_path}"
     chain += "[v]"
+
     subprocess.run(
         [
             "ffmpeg", "-y", "-i", video,
             "-filter_complex", chain,
             "-map", "[v]", "-map", "0:a?",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k",
+            "-t", "60", out_path,
+        ],
+        check=True,
+    )
+
+
+if __name__ == "__main__":
+    vod_id = find_vod_id(VOD)
+    comments = get_chat(vod_id)
+    print("Chat messages:", len(comments))
+
+    moments = find_moments(comments)
+    print("Moments found:", len(moments))
+    for score, t, cnt in moments:
+        print(f"  at {t // 60}:{t % 60:02} -> {cnt} msgs in {BUCKET}s ({score:.1f}x normal)")
+
+    model = WhisperModel("base", device="cpu", compute_type="int8")
+
+    for n, (score, t, cnt) in enumerate(moments, 1):
+        start = max(0, t - BEFORE)
+        end = t + BUCKET + AFTER
+        raw = f"{OUT}/raw_{n}.mp4"
+        print(f"Cutting clip {n}: {start}s to {end}s")
+
+        subprocess.run(
+            [
+                TDL, "videodownload", "--id", vod_id,
+                "-b", str(start), "-e", str(end), "-o", raw
+            ],
+            check=True,
+        )
+
+        ass = f"{OUT}/clip_{n}.ass"
+        has_caps = make_ass(model, raw, ass)
+        out = f"{OUT}/clip_{n}.mp4"
+        make_vertical(raw, ass, out, has_caps)
+        os.remove(raw)
+
+        with open(f"{OUT}/clip_{n}.json", "w") as f:
+            json.dump(
+                {
+                    "vod": VOD,
+                    "moment_seconds": t,
+                    "chat_msgs": cnt,
+                    "times_normal": round(score, 1),
+                    "captions": has_caps,
+                },
+                f,
+                indent=2,
+            )
+
+        print("  done:", out, "| captions:", has_caps)
