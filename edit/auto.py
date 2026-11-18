@@ -12,8 +12,8 @@ from fetch.twitch_clips import get_token, CLIENT_ID
 
 # Twitch login names (the part after twitch.tv/). Fix any that are wrong.
 STREAMERS = [
-    "kaicenat", "ishowspeed", "caseoh_", "jinnytty", "lacy",
-    "marlon",
+    "kaicenat", "ishowspeed", "caseoh_", "jynxzi", "xqc", "ninja",
+    "lacy", "marlon",
 ]
 HOURS_BACK = 30       # only VODs from the last 30 hours
 MIN_VOD_MINUTES = 60  # skip short streams
