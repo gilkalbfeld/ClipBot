@@ -4,7 +4,7 @@
     "Every clip must feature a funny moment, hook, or action in the first 5 seconds with a strong streamer reaction."
   ],
   "settings": {
-    "min_ai_score": 8
+    "min_ai_score": 9
   },
   "chat": [
     {
@@ -28,6 +28,17 @@
         "Remembering: Every clip must feature a funny moment, hook, or action in the first 5 seconds with a strong streamer reaction.",
         "min_ai_score → 8",
         "Flagged for the developer: Update AI judge prompt to strictly filter out off-game footage and ensure a strong hook or reaction in the first 5 seconds."
+      ]
+    },
+    {
+      "role": "user",
+      "text": "Great i want to see implementation of this in the immediately ok"
+    },
+    {
+      "role": "bot",
+      "text": "Got it boss, I'm bumping up the AI score threshold to 9 to strictly verify they are in-game and something big happens right away.",
+      "changes": [
+        "min_ai_score → 9"
       ]
     }
   ],
