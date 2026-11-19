@@ -13,7 +13,22 @@ import time
 
 import requests
 
-MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"]
+MODELS = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"]
+
+def pick_models(api_key, preferred):
+    """Google retires model names often — use our favourites if they exist, else any current Flash model."""
+    try:
+        r = requests.get("https://generativelanguage.googleapis.com/v1beta/models",
+                         headers={"x-goog-api-key": api_key}, params={"pageSize": 200}, timeout=20)
+        names = [m["name"].split("/", 1)[1] for m in r.json().get("models", [])
+                 if "generateContent" in m.get("supportedGenerationMethods", [])]
+    except Exception:
+        return preferred
+    good = [m for m in preferred if m in names]
+    flash = sorted([m for m in names if "flash" in m and "lite" not in m and "image" not in m
+                    and "tts" not in m and "live" not in m and "preview" not in m], reverse=True)
+    return (good + [m for m in flash if m not in good])[:4] or preferred
+
 
 PROMPT = """You are judging a clip from a {platform} livestream by {streamer} playing GTA 6,
 for a YouTube Shorts channel of funny / hype GTA 6 moments. Chat went crazy around {spike_at:.0f}s into this clip.
@@ -55,7 +70,7 @@ def judge(video, streamer, platform, spike_at):
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2},
     }
     for attempt in range(3):
-        for model in MODELS:
+        for model in pick_models(key, MODELS):
             try:
                 r = requests.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",

@@ -439,9 +439,6 @@ def page_run():
             load_runs.clear()
             st.success(f"Watching for {mins} minutes. Clips appear as they happen.")
 
-    st.write("")
-    chat_box()
-    st.write("")
     chat_box()
 
     st.subheader("Recent runs")
@@ -455,67 +452,6 @@ def page_run():
         st.markdown(f'<div class="run"><div><b>{html.escape(r["name"])}</b> · {ago(r["created_at"])} · '
                     f'<a href="{r["html_url"]}" target="_blank">logs</a></div>{pill}</div>',
                     unsafe_allow_html=True)
-
-
-def chat_box():
-    st.subheader("💬 Talk to ClipBot")
-    st.caption("Tell it what you notice — e.g. “clips start too early”, “more Kai Cenat”, "
-               "“only clip the really big moments”. It changes its settings for the next run.")
-    key = st.secrets.get("GEMINI_API_KEY", "")
-    if not key:
-        st.info("Add GEMINI_API_KEY in this app's Settings → Secrets to turn on chat.")
-        return
-    cs, sha = gh.read_json("chat_settings.json")
-    cs.setdefault("overrides", {})
-    cs.setdefault("instructions", [])
-    cs.setdefault("needs_code", [])
-    cs.setdefault("history", [])
-    with st.container(height=380, border=True):
-        if not cs["history"]:
-            st.caption("No messages yet.")
-        for m in cs["history"][-20:]:
-            with st.chat_message("user" if m["role"] == "user" else "assistant",
-                                 avatar=None if m["role"] == "user" else "🌴"):
-                st.write(m["text"])
-    msg = st.chat_input("Message ClipBot…")
-    if msg:
-        learned, _ = gh.read_json("learned.json")
-        current = {k: learned.get(k) for k in list(brain.TUNABLES) + list(brain.WEIGHTS) if k in learned}
-        current.update({k: v for k, v in cs["overrides"].items()})
-        fb = load_feedback()
-        recent = [{"streamer": v.get("streamer"), "rating": v.get("rating"), "comment": v.get("comment")}
-                  for v in list(fb.values())[-60:]]
-        with st.spinner("ClipBot is thinking…"):
-            try:
-                out = brain.ask(key, msg, cs["history"], current, recent, cs["instructions"])
-            except Exception as e:
-                st.error(f"Chat failed: {str(e)[:200]}")
-                return
-        cs["overrides"].update(out["set"])
-        for k, m in out["weights"].items():
-            cs["overrides"].setdefault(k, {}).update(m)
-        if out["instruction"]:
-            cs["instructions"].append(out["instruction"])
-        if out["needs_code"]:
-            cs["needs_code"].append(out["needs_code"])
-        reply = out["reply"]
-        changed = [f"{k} → {v}" for k, v in out["set"].items()] + \
-                  [f"{nice(a)} priority → {b}" for m in out["weights"].values() for a, b in m.items()]
-        if changed:
-            reply += "\n\n✅ Changed: " + ", ".join(changed) + " (applies on the next run)"
-        if out["needs_code"]:
-            reply += "\n\n🛠 Needs a code change — flagged for the developer: " + out["needs_code"]
-        cs["history"] += [{"role": "user", "text": msg}, {"role": "bot", "text": reply}]
-        cs["history"] = cs["history"][-40:]
-        gh.write_json("chat_settings.json", cs, sha, "ClipBot chat: " + msg[:60])
-        st.rerun()
-    if cs["overrides"]:
-        with st.expander("Settings you've changed by chat"):
-            st.json(cs["overrides"])
-            if st.button("Reset to automatic"):
-                cs["overrides"] = {}
-                gh.write_json("chat_settings.json", cs, sha, "ClipBot chat: reset settings")
-                st.rerun()
 
 
 STREAMERS = ["ishowspeed (YouTube)", "lacy", "kaicenat", "xqc", "jynxzi", "caseoh_", "adinross", "ohnepixel"]
