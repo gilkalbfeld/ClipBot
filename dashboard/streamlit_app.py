@@ -241,6 +241,22 @@ def recut_dialog(c, title):
         st.rerun()
 
 
+@st.dialog("Delete low-score clips?")
+def bulk_delete_dialog(clips):
+    st.write(f"This permanently deletes **{len(clips)} clips** the AI scored under 5/10 "
+             "(posted clips are never included). It can't be undone.")
+    a, b = st.columns(2)
+    if a.button("Cancel", use_container_width=True):
+        st.rerun()
+    if b.button(f"🗑 Delete {len(clips)}", type="primary", use_container_width=True):
+        bar = st.progress(0.0)
+        for i, c in enumerate(clips):
+            gh.delete_clip(c)
+            bar.progress((i + 1) / len(clips))
+        refresh()
+        st.rerun()
+
+
 @st.dialog("Delete this clip?")
 def delete_dialog(c, title):
     st.write(f"**{title or c['id']}**")
@@ -381,12 +397,25 @@ def page_library():
     streamers = sorted({c["streamer"] for c in clips if c["streamer"]})
     who = f2.selectbox("Streamer", ["All"] + streamers, format_func=lambda s: s if s == "All" else nice(s))
     status = f3.selectbox("Status", ["All", "Ready", "Posted"])
+    sort = st.radio("Sort", ["Newest", "🤖 Best AI score", "🤖 Worst AI score"], horizontal=True,
+                    label_visibility="collapsed")
     out = [c for c in clips
            if (who == "All" or c["streamer"] == who)
            and (status == "All" or (status == "Posted") == (c["id"] in posted))]
     if q:
         out = search(out, q)
-    st.caption(f"{len(out)} clips")
+
+    def score(c):
+        return clip_info(c["json_asset"]).get("ai_score") if "json_asset" in c else None
+    if sort != "Newest":
+        scored = [c for c in out if score(c) is not None]
+        rest = [c for c in out if score(c) is None]
+        out = sorted(scored, key=score, reverse=sort.startswith("🤖 Best")) + rest
+    low = [c for c in out if (score(c) is not None and score(c) < 5 and c["id"] not in posted)]
+    a, b = st.columns([3, 1], vertical_alignment="center")
+    a.caption(f"{len(out)} clips · {len(low)} scored under 5 by the AI")
+    if low and b.button(f"🗑 Delete {len(low)} low-score clips", use_container_width=True):
+        bulk_delete_dialog(low)
     grid(out, posted, key="lib", show_badge=True)
 
 
