@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-19T04:08:28+00:00",
+  "updated": "2026-11-19T04:13:56+00:00",
   "ratings": 5,
   "streamer_weight": {
     "lacy": 0.33,
@@ -7,14 +7,22 @@
     "xqc": 0.5
   },
   "spike_mult": {},
-  "layout_weight": {},
-  "words_weight": {},
+  "layout_weight": {
+    "fill": 0.3,
+    "blur": 0.5,
+    "bars": 2.0
+  },
+  "words_weight": {
+    "2": 0.33,
+    "4": 0.67
+  },
   "seconds_before": 40,
   "seconds_after": 12,
   "issues": {
     "ads": 1
   },
   "notes": [
+    "'bars' layout gets the most \ud83d\udc4d \u2014 using it more",
     "1 comment(s) about commercial breaks \u2014 ads are now skipped when recording Twitch"
   ]
 }
