@@ -2,6 +2,12 @@ name: Make vertical clips
 
 on:
   workflow_dispatch:
+  schedule:
+    # 11:17 AM, 5:17 PM, 11:17 PM New York time (times are UTC)
+    - cron: "17 16,22,4 * * *"
+
+concurrency:
+  group: make-clips
 
 permissions:
   contents: write
