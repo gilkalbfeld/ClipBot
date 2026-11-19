@@ -1,0 +1,15 @@
+{
+  "rules": [],
+  "settings": {},
+  "chat": [
+    {
+      "role": "user",
+      "text": "Hi"
+    },
+    {
+      "role": "bot",
+      "text": "Hey boss! Ready to catch some more GTA 6 moments. Let me know if you want to tweak any settings or check the queue.",
+      "changes": []
+    }
+  ]
+}
