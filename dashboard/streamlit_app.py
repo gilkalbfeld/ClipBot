@@ -86,7 +86,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] {{ background:linear-gradient(18
 .avatar {{ width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
   font-size:.7rem; font-weight:700; color:#fff; background:linear-gradient(135deg,{PINK},{PURPLE}); }}
 .live {{ color:{PINK}; font-weight:600; }}
-.ctitle {{ font-weight:700; font-size:1.02rem; line-height:1.35; color:#fff; margin:.15rem 0 .6rem; min-height:2.7em; }}
+.ctitle {{ font-weight:700; font-size:1rem; line-height:1.35; color:#fff; margin:.35rem 0 .3rem; min-height:2.7em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }}
 .badge {{ display:inline-block; padding:.12rem .55rem; border-radius:999px; font-size:.72rem; font-weight:600; }}
 .b-ready {{ background:rgba(255,62,165,.15); color:{PINK}; }}
 .b-posted {{ background:rgba(139,92,246,.18); color:#b79cff; }}
@@ -95,6 +96,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] {{ background:linear-gradient(18
 .b-bad {{ background:rgba(239,68,68,.15); color:#f87171; }}
 h1 {{ font-weight:800 !important; letter-spacing:-.03em; }}
 .meta {{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+.cardhead {{ display:flex; justify-content:space-between; align-items:center; margin-top:.2rem; }}
+.cardhead .num {{ font-weight:800; color:#fff; font-size:.85rem; background:rgba(255,255,255,.08);
+  padding:.1rem .5rem; border-radius:6px; }}
+.cardhead .badges {{ display:flex; gap:.3rem; }}
+.why {{ color:#8d86a0; font-size:.8rem; font-style:italic; margin:-.1rem 0 .3rem;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stVerticalBlock"] {{ gap:.55rem; }}
+div[data-testid="stPopover"] button {{ padding:.35rem .2rem; }}
 .nothumb {{ aspect-ratio:4/3; border-radius:12px; background:linear-gradient(135deg,#2a1638,#1a1030);
   display:flex; align-items:center; justify-content:center; font-size:2.2rem; }}
 div[data-testid="stImage"] img {{ border-radius:12px; aspect-ratio:4/3; object-fit:cover; }}
@@ -317,11 +326,13 @@ def card(c, posted, show_badge=False, mode="library"):
     title, desc = split_post(post_text(c["post_asset"])) if "post_asset" in c else ("", "")
     is_posted = c["id"] in posted
     fb = load_feedback().get(c["id"], {})
+    info = clip_info(c["json_asset"]) if "json_asset" in c else {}
     playing = st.session_state.get("playing") == c["id"]
     with st.container(border=True):
+        # ---- media
         if playing:
             st.video(video_bytes(c["video_asset"]), format="video/mp4", autoplay=True)
-            if st.button("✕ Close video", key="close" + c["id"], use_container_width=True):
+            if st.button("✕ Close", key="close" + c["id"], use_container_width=True):
                 st.session_state.playing = None
                 st.rerun()
         else:
@@ -332,30 +343,32 @@ def card(c, posted, show_badge=False, mode="library"):
             if st.button("▶  Play", key="play" + c["id"], use_container_width=True):
                 st.session_state.playing = c["id"]
                 st.rerun()
-        badge = ""
-        if show_badge:
-            rv = load_review().get(c["id"], {}).get("status")
-            badge = ('<span class="badge b-posted">Posted</span>' if is_posted
-                     else '<span class="badge b-ok">Approved</span>' if rv == "approved"
-                     else '<span class="badge b-run">Kept</span>' if rv == "library"
-                     else '<span class="badge b-ready">New</span>')
+
+        # ---- info
         name = nice(c["streamer"])
-        src = '<span class="live">Live</span>' if c["source"] == "Live" else "Top clip"
-        info = clip_info(c["json_asset"]) if "json_asset" in c else {}
+        badges = ""
         if info.get("ai_score") is not None:
             sc = info["ai_score"]
             col = "b-ok" if sc >= 7 else ("b-ready" if sc >= 5 else "b-bad")
-            badge += (f' <span class="badge {col}" title="{html.escape(info.get("ai_reason", ""))}">'
-                      f'🤖 {sc:g}/10</span>')
+            badges += f'<span class="badge {col}">🤖 {sc:g}</span>'
+        if show_badge:
+            rv = load_review().get(c["id"], {}).get("status")
+            badges += ('<span class="badge b-posted">Posted</span>' if is_posted
+                       else '<span class="badge b-ok">Approved</span>' if rv == "approved"
+                       else '<span class="badge b-run">Kept</span>' if rv == "library"
+                       else '<span class="badge b-ready">New</span>')
+        src = '<span class="live">● Live</span>' if c["source"] == "Live" else "Top clip"
         st.markdown(
-            f'<div class="meta"><b style="color:#fff">#{c.get("num", "")}</b>'
-            f'<span class="avatar">{html.escape(name[:1].upper())}</span>'
-            f'{html.escape(name)} · {src} · {ago(c["made_at"])} {badge}</div>'
+            f'<div class="cardhead"><span class="num">#{c.get("num", "")}</span>'
+            f'<span class="badges">{badges}</span></div>'
             f'<div class="ctitle">{html.escape(title or c["id"])}</div>'
-            + (f'<div class="meta" style="margin-top:-.4rem">🤖 {html.escape(info["ai_reason"])}</div>'
-               if info.get("ai_reason") else ""),
+            f'<div class="meta"><span class="avatar">{html.escape(name[:1].upper())}</span>'
+            f'{html.escape(name)} · {src} · {ago(c["made_at"])}</div>'
+            + (f'<div class="why">{html.escape(info["ai_reason"])}</div>' if info.get("ai_reason") else ""),
             unsafe_allow_html=True)
-        if mode == "ready":   # approved clips: just get them posted
+
+        # ---- Ready to Post: only the posting buttons
+        if mode == "ready":
             r1, r2, r3 = st.columns(3, gap="small")
             if r1.button("🚀 Post", key="p" + c["id"], type="primary", use_container_width=True):
                 post_dialog(c, title, desc)
@@ -366,37 +379,30 @@ def card(c, posted, show_badge=False, mode="library"):
                 st.rerun()
             if r3.button("✅ Posted", key="mp" + c["id"], use_container_width=True,
                          help="Already uploaded it? Mark it posted"):
-                try:
-                    gh.set_posted(c["id"])
-                except Exception as e:
-                    st.error(f"Couldn't save: {str(e)[:200]}")
-                else:
-                    refresh()
-                    st.rerun()
+                mark_posted(c)
             return
 
-        copy_buttons(title, desc, c["id"])
-
-        # feedback: 👍 👎 + comment
-        up, down = st.columns(2, gap="small")
+        # ---- feedback
         r = fb.get("rating", 0)
-        comment = st.text_input("Feedback", value=fb.get("comment", ""), placeholder="Add feedback…",
-                                label_visibility="collapsed", key="c" + c["id"])
+        up, down = st.columns(2, gap="small")
         if up.button("👍 Good", key="up" + c["id"], type="primary" if r > 0 else "secondary",
                      use_container_width=True):
-            gh.set_feedback(c, 1, comment)
+            gh.set_feedback(c, 1, st.session_state.get("c" + c["id"], fb.get("comment", "")))
             load_feedback.clear()
             st.rerun()
         if down.button("👎 Bad", key="dn" + c["id"], type="primary" if r < 0 else "secondary",
                        use_container_width=True):
-            gh.set_feedback(c, -1, comment)
+            gh.set_feedback(c, -1, st.session_state.get("c" + c["id"], fb.get("comment", "")))
             load_feedback.clear()
             st.rerun()
+        comment = st.text_input("Feedback", value=fb.get("comment", ""), placeholder="Add a note for ClipBot…",
+                                label_visibility="collapsed", key="c" + c["id"])
         if r and comment != fb.get("comment", ""):
             gh.set_feedback(c, r, comment)
             load_feedback.clear()
-            st.toast("Comment saved")
+            st.toast("Note saved")
 
+        # ---- main actions + "more" menu
         if mode == "new":
             a1, a2, a3 = st.columns([2, 2, 1], gap="small")
             if a1.button("✅ Approve", key="ap" + c["id"], type="primary", use_container_width=True,
@@ -409,32 +415,38 @@ def card(c, posted, show_badge=False, mode="library"):
                 gh.set_review(c, "library")
                 refresh()
                 st.rerun()
-            p2 = a3
-        elif is_posted:
-            p1, p2 = st.columns([3, 1], gap="small")
-            if p1.button("↩ Not posted", key="u" + c["id"], use_container_width=True):
-                gh.set_posted(c["id"], undo=True)
-                refresh()
-                st.rerun()
+            more = a3
         else:
-            p1, p3, p2 = st.columns([2, 2, 1], gap="small")
-            if p1.button("🚀  Post", key="p" + c["id"], type="primary", use_container_width=True):
-                post_dialog(c, title, desc)
-            if p3.button("✅ Posted", key="mp" + c["id"], use_container_width=True,
-                         help="Already uploaded it? Mark it posted"):
-                try:
-                    gh.set_posted(c["id"])
-                except Exception as e:
-                    st.error(f"Couldn't save: {str(e)[:200]}")
-                else:
+            a1, a3 = st.columns([4, 1], gap="small")
+            if is_posted:
+                if a1.button("↩ Not posted", key="u" + c["id"], use_container_width=True):
+                    gh.set_posted(c["id"], undo=True)
                     refresh()
                     st.rerun()
-        if p2.button("🗑", key="del" + c["id"], use_container_width=True, help="Delete clip"):
-            delete_dialog(c, title)
-        if c["id"] in st.session_state.get("recutting", set()):
-            st.caption("✂️ Re-cutting… new version shows up here in ~5 min (tap Refresh).")
-        elif st.button("✂️  Fix timing", key="fix" + c["id"], use_container_width=True):
-            recut_dialog(c, title)
+            elif a1.button("🚀 Post", key="p" + c["id"], type="primary", use_container_width=True):
+                post_dialog(c, title, desc)
+            more = a3
+        with more.popover("⋯", use_container_width=True):
+            if c["id"] in st.session_state.get("recutting", set()):
+                st.caption("✂️ Re-cutting… ready in ~5 min")
+            elif st.button("✂️ Fix timing", key="fix" + c["id"], use_container_width=True):
+                recut_dialog(c, title)
+            if not is_posted and mode != "new" and st.button("✅ Mark posted", key="mp" + c["id"],
+                                                             use_container_width=True):
+                mark_posted(c)
+            copy_buttons(title, desc, c["id"])
+            if st.button("🗑 Delete", key="del" + c["id"], use_container_width=True):
+                delete_dialog(c, title)
+
+
+def mark_posted(c):
+    try:
+        gh.set_posted(c["id"])
+    except Exception as e:
+        st.error(f"Couldn't save: {str(e)[:200]}")
+    else:
+        refresh()
+        st.rerun()
 
 
 def grid(clips, posted, per_page=12, key="g", show_badge=False, mode="library"):
