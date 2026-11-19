@@ -10,7 +10,7 @@ GAME_NAMES = ["Grand Theft Auto VI", "Grand Theft Auto V"]
 
 # Big streamers: we always check their clips (edit anytime)
 FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross"]
-FAMOUS_ANY_GAME = True  # False = only their GTA clips
+FAMOUS_ANY_GAME = False  # True = any game, False = only their GTA clips
 
 LANGUAGE = "en"      # "en" = English only
 MIN_VIEWS = 1000     # raise to be pickier
