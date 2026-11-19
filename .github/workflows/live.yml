@@ -1,0 +1,42 @@
+name: Live watcher
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How many minutes to watch (max 340)"
+        default: "330"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-watcher
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install -r requirements.txt faster-whisper chat-downloader
+      - name: Make sure the live-clips release exists
+        run: gh release view live-clips >/dev/null 2>&1 || gh release create live-clips --title "Live clips" --notes "Clips cut live from chat spikes"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: python live/watch.py
+        env:
+          RUN_MINUTES: ${{ inputs.minutes || '330' }}
+          RELEASE_TAG: live-clips
+          GH_TOKEN: ${{ github.token }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-clips
+          path: output/live/
