@@ -9,6 +9,7 @@ import requests
 API = "https://api.github.com"
 RELEASES = {"live-clips": "Live", "clips": "Scheduled"}
 POSTED_FILE = "posted.json"
+REVIEW_FILE = "review.json"
 FEEDBACK_FILE = "feedback.json"
 
 
@@ -136,6 +137,25 @@ class GitHub:
         self.write_json(FEEDBACK_FILE, data, sha, f"Deleted clip: {clip['id']}")
         for aid in clip.get("assets", []):
             self.s.delete(f"{API}/repos/{self.repo}/releases/assets/{aid}", timeout=30)
+
+    # ---------- review: approved (-> Ready to Post) or library (keep, don't post) ----------
+    def review(self):
+        return self.read_json(REVIEW_FILE)[0]
+
+    def set_review(self, clip, status):
+        data, sha = self.read_json(REVIEW_FILE)
+        if status is None:
+            data.pop(clip["id"], None)
+        else:
+            data[clip["id"]] = {"status": status, "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+        self.write_json(REVIEW_FILE, data, sha, f"Review {status or 'reset'}: {clip['id']}")
+        if status == "approved":   # approving counts as a 👍 for learning, unless you already rated it
+            fb, fsha = self.read_json(FEEDBACK_FILE)
+            if clip["id"] not in fb:
+                fb[clip["id"]] = {"rating": 1, "comment": "", "approved": True,
+                                  "streamer": clip.get("streamer", ""), "source": clip.get("source", ""),
+                                  "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+                self.write_json(FEEDBACK_FILE, fb, fsha, f"Feedback 👍 (approved): {clip['id']}")
 
     # ---------- posted list ----------
     def posted(self):

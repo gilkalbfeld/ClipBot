@@ -152,13 +152,18 @@ def load_feedback():
     return gh.feedback()
 
 
+@st.cache_data(ttl=30)
+def load_review():
+    return gh.review()
+
+
 @st.cache_data(ttl=20)
 def load_runs():
     return gh.recent_runs(8)
 
 
 def refresh():
-    for f in (load_clips, load_posted, load_feedback, load_runs):
+    for f in (load_clips, load_posted, load_feedback, load_runs, load_review):
         f.clear()
 
 
@@ -272,7 +277,7 @@ def delete_dialog(c, title):
 
 
 # ---------------- clip card ----------------
-def card(c, posted, show_badge=False):
+def card(c, posted, show_badge=False, mode="library"):
     title, desc = split_post(post_text(c["post_asset"])) if "post_asset" in c else ("", "")
     is_posted = c["id"] in posted
     fb = load_feedback().get(c["id"], {})
@@ -293,8 +298,11 @@ def card(c, posted, show_badge=False):
                 st.rerun()
         badge = ""
         if show_badge:
+            rv = load_review().get(c["id"], {}).get("status")
             badge = ('<span class="badge b-posted">Posted</span>' if is_posted
-                     else '<span class="badge b-ready">Ready</span>')
+                     else '<span class="badge b-ok">Approved</span>' if rv == "approved"
+                     else '<span class="badge b-run">Kept</span>' if rv == "library"
+                     else '<span class="badge b-ready">New</span>')
         name = nice(c["streamer"])
         src = '<span class="live">Live</span>' if c["source"] == "Live" else "Top clip"
         info = clip_info(c["json_asset"]) if "json_asset" in c else {}
@@ -332,7 +340,20 @@ def card(c, posted, show_badge=False):
             load_feedback.clear()
             st.toast("Comment saved")
 
-        if is_posted:
+        if mode == "new":
+            a1, a2, a3 = st.columns([2, 2, 1], gap="small")
+            if a1.button("✅ Approve", key="ap" + c["id"], type="primary", use_container_width=True,
+                         help="Moves it to Ready to Post"):
+                gh.set_review(c, "approved")
+                refresh()
+                st.rerun()
+            if a2.button("📚 Keep", key="kp" + c["id"], use_container_width=True,
+                         help="Not posting it, but keep it in your Library"):
+                gh.set_review(c, "library")
+                refresh()
+                st.rerun()
+            p2 = a3
+        elif is_posted:
             p1, p2 = st.columns([3, 1], gap="small")
             if p1.button("↩ Not posted", key="u" + c["id"], use_container_width=True):
                 gh.set_posted(c["id"], undo=True)
@@ -350,7 +371,7 @@ def card(c, posted, show_badge=False):
             recut_dialog(c, title)
 
 
-def grid(clips, posted, per_page=12, key="g", show_badge=False):
+def grid(clips, posted, per_page=12, key="g", show_badge=False, mode="library"):
     if not clips:
         st.info("No clips here yet.")
         return
@@ -362,31 +383,55 @@ def grid(clips, posted, per_page=12, key="g", show_badge=False):
     cols = st.columns(3, gap="medium")
     for i, c in enumerate(chunk):
         with cols[i % 3]:
-            card(c, posted, show_badge)
+            card(c, posted, show_badge, mode)
     if pages > 1:
         st.number_input("Page", 1, pages, key=key + "page")
 
 
+STOP = {"the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "with", "is", "clip", "clips", "where",
+        "that", "this", "it", "for", "gta", "6"}
+
+
 def search(clips, q):
-    q = q.lower().strip()
-    out = []
+    """Finds clips by what happens in them (AI notes), title, streamer or date. Best matches first."""
+    words = [w for w in q.lower().replace(",", " ").split() if w not in STOP] or q.lower().split()
+    scored = []
     for c in clips:
         title = split_post(post_text(c["post_asset"]))[0] if "post_asset" in c else ""
-        if q in " ".join([c["id"], c["streamer"], nice(c["streamer"]), title, c["made_at"]]).lower():
-            out.append(c)
-    return out
+        info = clip_info(c["json_asset"]) if "json_asset" in c else {}
+        hay = " ".join([c["id"], c["streamer"], nice(c["streamer"]), title, c["made_at"],
+                        info.get("ai_summary", ""), info.get("ai_reason", ""), " ".join(info.get("ai_tags", [])),
+                        info.get("stream_title", "")]).lower()
+        hits = sum(1 for w in words if w in hay)
+        if hits and hits >= max(1, len(words) // 2):
+            scored.append((hits, c))
+    scored.sort(key=lambda x: -x[0])
+    return [c for _, c in scored]
 
 
 # ---------------- pages ----------------
-def page_ready():
-    clips, posted = load_clips(), load_posted()
-    todo = [c for c in clips if c["id"] not in posted]
-    st.title("Ready to Post")
+def page_new():
+    clips, posted, review = load_clips(), load_posted(), load_review()
+    new = [c for c in clips if c["id"] not in review and c["id"] not in posted]
+    st.title("New Clips")
+    st.caption("Fresh clips from the bot. ✅ Approve → Ready to Post · 📚 Keep → Library only · 🗑 Delete.")
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    tiles([("Waiting to post", len(todo)), ("Posted", len(posted)),
-           ("Made today", sum(c["made_at"][:10] == today for c in clips))])
+    tiles([("To review", len(new)), ("Made today", sum(c["made_at"][:10] == today for c in clips)),
+           ("Approved", sum(1 for v in review.values() if v.get("status") == "approved"))])
     st.write("")
-    grid(todo, posted, key="ready")
+    grid(new, posted, key="new", mode="new")
+
+
+def page_ready():
+    clips, posted, review = load_clips(), load_posted(), load_review()
+    todo = [c for c in clips if review.get(c["id"], {}).get("status") == "approved" and c["id"] not in posted]
+    st.title("Ready to Post")
+    tiles([("Approved, waiting to post", len(todo)), ("Posted", len(posted)),
+           ("In New Clips", sum(1 for c in clips if c["id"] not in review and c["id"] not in posted))])
+    st.write("")
+    if not todo:
+        st.info("Nothing approved yet — go to 🆕 New Clips and approve the good ones.")
+    grid(todo, posted, key="ready", mode="ready")
 
 
 def page_library():
@@ -396,12 +441,17 @@ def page_library():
     q = f1.text_input("Search", placeholder="Search streamer, title, date…")
     streamers = sorted({c["streamer"] for c in clips if c["streamer"]})
     who = f2.selectbox("Streamer", ["All"] + streamers, format_func=lambda s: s if s == "All" else nice(s))
-    status = f3.selectbox("Status", ["All", "Ready", "Posted"])
+    status = f3.selectbox("Status", ["All", "New", "Approved", "Kept", "Posted"])
     sort = st.radio("Sort", ["Newest", "🤖 Best AI score", "🤖 Worst AI score"], horizontal=True,
                     label_visibility="collapsed")
+    review = load_review()
+
+    def status_of(c):
+        if c["id"] in posted:
+            return "Posted"
+        return {"approved": "Approved", "library": "Kept"}.get(review.get(c["id"], {}).get("status"), "New")
     out = [c for c in clips
-           if (who == "All" or c["streamer"] == who)
-           and (status == "All" or (status == "Posted") == (c["id"] in posted))]
+           if (who == "All" or c["streamer"] == who) and (status == "All" or status_of(c) == status)]
     if q:
         out = search(out, q)
 
@@ -543,6 +593,7 @@ def page_money():
 
 
 PAGES = {
+    "New Clips": ("🆕", page_new),
     "Ready to Post": ("🎬", page_ready),
     "Library": ("📚", page_library),
     "Make Clips": ("⚡", page_run),
@@ -550,7 +601,7 @@ PAGES = {
     "Money": ("💰", page_money),
 }
 if "page" not in st.session_state:
-    st.session_state.page = "Ready to Post"
+    st.session_state.page = "New Clips"
 
 with st.sidebar:
     st.markdown('<div class="logo">🌴 <span>ClipBot</span></div>', unsafe_allow_html=True)
@@ -567,7 +618,7 @@ with st.sidebar:
 
 # ---- top bar: search + make clips ----
 s1, s2 = st.columns([5, 1.2], vertical_alignment="center")
-top_q = s1.text_input("Search", placeholder="🔍  Search clips, streamers…", label_visibility="collapsed")
+top_q = s1.text_input("Search", placeholder="🔍  Search what happens… e.g. “Lucia fishing”, “police chase”, “Kai crash”", label_visibility="collapsed")
 if s2.button("Make clips now", type="primary", use_container_width=True, key="topmake"):
     gh.start_workflow("make.yml")
     load_runs.clear()

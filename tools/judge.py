@@ -48,7 +48,21 @@ Reply ONLY with JSON:
   "reason": "max 12 words, what happens",
   "moment_start": seconds where the setup of the moment starts,
   "moment_end": seconds where the reaction/payoff is over,
-  "problems": list from ["nothing_happens","calm_talking","ad_break","loading_or_menu","offscreen","too_long_setup","cut_off"]}}"""
+  "problems": list from ["nothing_happens","calm_talking","ad_break","loading_or_menu","offscreen","too_long_setup","cut_off"],
+  "title": "YouTube Shorts title about what ACTUALLY happens in this clip. Specific, punchy, max 70 chars,
+            curiosity hook, streamer's name ({streamer_nick}), 1 emoji at the end. Don't spoil the payoff.
+            Avoid generic templates like 'can't believe what happened' or 'was NOT ready'.",
+  "summary": "2-3 plain sentences describing exactly what happens: characters (e.g. Jason, Lucia), places,
+              vehicles, actions, what the streamer says/does. Used for searching clips later.",
+  "tags": ["5-8 short search tags about the content, e.g. 'fishing', 'police chase', 'lucia', 'boat'"]}}"""
+
+
+def nick(streamer):
+    try:
+        from edit.titles import NICKNAMES
+        return NICKNAMES.get(streamer.lower(), streamer)
+    except Exception:
+        return streamer
 
 
 def _small_copy(src, dst):
@@ -70,7 +84,8 @@ def judge(video, streamer, platform, spike_at):
     body = {
         "contents": [{"parts": [
             {"inline_data": {"mime_type": "video/mp4", "data": b64}},
-            {"text": PROMPT.format(platform=platform, streamer=streamer, spike_at=spike_at)},
+            {"text": PROMPT.format(platform=platform, streamer=streamer, spike_at=spike_at,
+                                   streamer_nick=nick(streamer))},
         ]}],
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2,
                              "thinkingConfig": {"thinkingBudget": 512}},

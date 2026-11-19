@@ -303,7 +303,7 @@ def renderer():
 
             # Title/description helpers expect a clip-like dict
             clip = {"broadcaster_name": job["name"], "title": "", "url": job["url"]}
-            title = make_title(clip)
+            title = (verdict or {}).get("title") or make_title(clip)   # AI writes a title about what happens
             desc = make_description(clip, title)
             info = {
                 "youtube_title": title,
@@ -320,6 +320,8 @@ def renderer():
                 "ai_score": verdict["score"] if verdict else None,
                 "ai_reason": verdict.get("reason", "") if verdict else "",
                 "ai_problems": verdict.get("problems", []) if verdict else [],
+                "ai_summary": verdict.get("summary", "") if verdict else "",
+                "ai_tags": verdict.get("tags", []) if verdict else [],
                 "captions": bool(has_caps),
                 "layout": layout,
                 "caption_words": words_per,

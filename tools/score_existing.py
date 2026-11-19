@@ -58,11 +58,25 @@ def main():
                     continue
                 fails = 0
                 info.update({"ai_score": v["score"], "ai_reason": v.get("reason", ""),
-                             "ai_problems": v.get("problems", []), "streamer": streamer})
+                             "ai_problems": v.get("problems", []), "streamer": streamer,
+                             "ai_summary": v.get("summary", ""), "ai_tags": v.get("tags", [])})
+                files = []
+                if v.get("title"):
+                    from edit.titles import make_description, make_tags
+                    url = info.get("source_url") or f"https://www.twitch.tv/{streamer}"
+                    fake = {"broadcaster_name": streamer, "title": "", "url": url}
+                    info["youtube_title"] = v["title"]
+                    info["youtube_description"] = make_description(fake, v["title"])
+                    info["youtube_tags"] = make_tags(fake) + v.get("tags", [])[:5]
+                    pp = os.path.join(d, f"{cid}_post.txt")
+                    with open(pp, "w", encoding="utf-8") as f:
+                        f.write(info["youtube_description"])
+                    files.append(pp)
                 jp = os.path.join(d, f"{cid}.json")
                 with open(jp, "w") as f:
                     json.dump(info, f, indent=2)
-                subprocess.run(["gh", "release", "upload", tag, jp, "--clobber"], check=True, capture_output=True)
+                subprocess.run(["gh", "release", "upload", tag, jp, *files, "--clobber"], check=True,
+                               capture_output=True)
                 done += 1
                 print(f"{cid}: {v['score']}/10 — {v.get('reason', '')}")
     print(f"Scored {done} clips")
