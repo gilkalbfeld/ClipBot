@@ -254,8 +254,12 @@ def post_dialog(c, title, desc):
     st.caption("On iPad you can also open the YouTube app → ＋ → Short → pick the downloaded video.")
     st.markdown("**4. Done?**")
     yt = st.text_input("YouTube link (optional)", placeholder="https://youtube.com/shorts/…")
-    if st.button("✅  Mark as posted", use_container_width=True):
-        gh.set_posted(c["id"], yt)
+    if st.button("✅  Mark as posted", use_container_width=True, key="dlgposted" + c["id"]):
+        try:
+            gh.set_posted(c["id"], yt)
+        except Exception as e:
+            st.error(f"Couldn't save: {str(e)[:200]}")
+            return
         refresh()
         st.rerun()
 
@@ -393,9 +397,18 @@ def card(c, posted, show_badge=False, mode="library"):
                 refresh()
                 st.rerun()
         else:
-            p1, p2 = st.columns([3, 1], gap="small")
+            p1, p3, p2 = st.columns([2, 2, 1], gap="small")
             if p1.button("🚀  Post", key="p" + c["id"], type="primary", use_container_width=True):
                 post_dialog(c, title, desc)
+            if p3.button("✅ Posted", key="mp" + c["id"], use_container_width=True,
+                         help="Already uploaded it? Mark it posted"):
+                try:
+                    gh.set_posted(c["id"])
+                except Exception as e:
+                    st.error(f"Couldn't save: {str(e)[:200]}")
+                else:
+                    refresh()
+                    st.rerun()
         if p2.button("🗑", key="del" + c["id"], use_container_width=True, help="Delete clip"):
             delete_dialog(c, title)
         if c["id"] in st.session_state.get("recutting", set()):

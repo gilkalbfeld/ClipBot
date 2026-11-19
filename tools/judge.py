@@ -151,8 +151,10 @@ def judge_text(transcript, streamer, platform="twitch", stream_title=""):
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.6,
                              "thinkingConfig": {"thinkingBudget": 256}},
     }
+    models = pick_models(key, MODELS)
+    models = [m for m in models if "lite" in m] + [m for m in models if "lite" not in m]  # lite = more free quota
     for attempt in range(3):
-        for model in pick_models(key, MODELS):
+        for model in models:
             try:
                 r = requests.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
@@ -173,9 +175,8 @@ def judge_text(transcript, streamer, platform="twitch", stream_title=""):
                     continue
             LAST_ERROR["text"] = f"{model}: {r.status_code} " + " ".join(r.text.split())[:300]
             if r.status_code == 429:
-                time.sleep(15)
-                break
-        time.sleep(3)
+                continue      # try the next model, each has its own free quota
+        time.sleep(10)
     return None
 
 
