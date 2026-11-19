@@ -226,15 +226,17 @@ def card(c, posted, show_badge=False):
         copy_buttons(title, desc, c["id"])
 
         # feedback: 👍 👎 + comment
-        up, down, box = st.columns([1, 1, 3], gap="small", vertical_alignment="center")
+        up, down = st.columns(2, gap="small")
         r = fb.get("rating", 0)
-        comment = box.text_input("Feedback", value=fb.get("comment", ""), placeholder="Add feedback…",
-                                 label_visibility="collapsed", key="c" + c["id"])
-        if up.button("👍", key="up" + c["id"], type="primary" if r > 0 else "secondary", use_container_width=True):
+        comment = st.text_input("Feedback", value=fb.get("comment", ""), placeholder="Add feedback…",
+                                label_visibility="collapsed", key="c" + c["id"])
+        if up.button("👍 Good", key="up" + c["id"], type="primary" if r > 0 else "secondary",
+                     use_container_width=True):
             gh.set_feedback(c, 1, comment)
             load_feedback.clear()
             st.rerun()
-        if down.button("👎", key="dn" + c["id"], type="primary" if r < 0 else "secondary", use_container_width=True):
+        if down.button("👎 Bad", key="dn" + c["id"], type="primary" if r < 0 else "secondary",
+                       use_container_width=True):
             gh.set_feedback(c, -1, comment)
             load_feedback.clear()
             st.rerun()
