@@ -244,5 +244,12 @@
     "streamer": "lacy",
     "source": "Live",
     "at": "2026-11-19T17:32:18+00:00"
+  },
+  "caseoh__20261119_061816": {
+    "rating": -1,
+    "comment": "",
+    "streamer": "caseoh_",
+    "source": "Live",
+    "at": "2026-11-19T17:32:41+00:00"
   }
 }
