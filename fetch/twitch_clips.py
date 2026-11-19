@@ -9,7 +9,10 @@ CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GAME_NAMES = ["Grand Theft Auto VI", "Grand Theft Auto V"]
 
 # Big streamers: we always check their clips (edit anytime)
-FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross"]
+FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross", "lacy"]
+
+# Favorites get pushed up the list (score x this number)
+FAVORITES = {"ishowspeed": 3, "lacy": 2}
 FAMOUS_ANY_GAME = False  # True = any game, False = only their GTA clips
 
 LANGUAGE = "en"      # "en" = English only
@@ -84,7 +87,8 @@ def add_score(c):
     """Views per hour since the clip was made = how fast it's blowing up."""
     created = datetime.fromisoformat(c["created_at"].replace("Z", "+00:00"))
     hours = max((datetime.now(timezone.utc) - created).total_seconds() / 3600, 1)
-    c["score"] = round(c["view_count"] / hours, 1)
+    boost = FAVORITES.get(c["broadcaster_name"].lower(), 1)
+    c["score"] = round(c["view_count"] / hours * boost, 1)
     return c
 
 

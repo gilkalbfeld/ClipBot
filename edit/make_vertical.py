@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from faster_whisper import WhisperModel
 from fetch.twitch_clips import get_clips
 from edit.download import download, has_audio
+from edit.titles import make_title, make_description, make_tags
 
 OUT_DIR = "output"
 HOW_MANY = 3
@@ -102,7 +103,12 @@ if __name__ == "__main__":
         out = os.path.join(OUT_DIR, f"{clip['id']}_vertical.mp4")
         make_vertical(src, srt, out, has_caps, layout)
 
+        yt_title = make_title(clip)
+        yt_desc = make_description(clip, yt_title)
         info = {
+            "youtube_title": yt_title,
+            "youtube_description": yt_desc,
+            "youtube_tags": make_tags(clip),
             "title": clip["title"],
             "streamer": clip["broadcaster_name"],
             "credit": f"Clip from twitch.tv/{clip['broadcaster_name']}",
@@ -115,7 +121,11 @@ if __name__ == "__main__":
         }
         with open(os.path.join(OUT_DIR, f"{clip['id']}.json"), "w") as f:
             json.dump(info, f, indent=2)
+        # Ready-to-paste text for posting from your phone
+        with open(os.path.join(OUT_DIR, f"{clip['id']}_post.txt"), "w", encoding="utf-8") as f:
+            f.write(yt_desc)
         print("  done:", out, "| layout:", layout, "| words:", words_per)
+        print("  title:", yt_title)
 
         made.append(clip["id"])
         with open(MADE_FILE, "w") as f:
