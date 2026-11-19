@@ -7,7 +7,12 @@ from datetime import datetime, timezone
 import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from data import GitHub, split_post  # noqa: E402
+import importlib  # noqa: E402
+
+import data  # noqa: E402
+
+importlib.reload(data)  # pick up changes to data.py on every update, no reboot needed
+GitHub, split_post = data.GitHub, data.split_post
 
 st.set_page_config(page_title="ClipBot", page_icon="🎬", layout="wide")
 
