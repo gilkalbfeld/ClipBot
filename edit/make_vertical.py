@@ -76,7 +76,17 @@ if __name__ == "__main__":
     os.makedirs(OUT_DIR, exist_ok=True)
     model = WhisperModel("base", device="cpu", compute_type="int8")
 
-    for clip in get_clips()[:HOW_MANY]:
+    # Clips we already made, so we never make the same one twice
+    MADE_FILE = "made_clips.json"
+    made = []
+    if os.path.exists(MADE_FILE):
+        with open(MADE_FILE) as f:
+            made = json.load(f)
+
+    new_clips = [c for c in get_clips() if c["id"] not in made]
+    print(f"{len(new_clips)} new clips found ({len(made)} already made)")
+
+    for clip in new_clips[:HOW_MANY]:
         print("Working on:", clip["broadcaster_name"], "-", clip["title"])
         src = download(clip)
         if not src:
@@ -106,3 +116,7 @@ if __name__ == "__main__":
         with open(os.path.join(OUT_DIR, f"{clip['id']}.json"), "w") as f:
             json.dump(info, f, indent=2)
         print("  done:", out, "| layout:", layout, "| words:", words_per)
+
+        made.append(clip["id"])
+        with open(MADE_FILE, "w") as f:
+            json.dump(made, f, indent=2)
