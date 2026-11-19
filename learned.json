@@ -1,0 +1,20 @@
+{
+  "updated": "2026-11-19T04:08:28+00:00",
+  "ratings": 5,
+  "streamer_weight": {
+    "lacy": 0.33,
+    "jynxzi": 1.0,
+    "xqc": 0.5
+  },
+  "spike_mult": {},
+  "layout_weight": {},
+  "words_weight": {},
+  "seconds_before": 40,
+  "seconds_after": 12,
+  "issues": {
+    "ads": 1
+  },
+  "notes": [
+    "1 comment(s) about commercial breaks \u2014 ads are now skipped when recording Twitch"
+  ]
+}

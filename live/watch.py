@@ -19,6 +19,7 @@ from collections import deque
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tools.learned import LEARNED, weighted_choice, streamer_weight, spike_mult  # noqa: E402
 
 # ---------------- settings (edit anytime) ----------------
 
@@ -38,8 +39,8 @@ MAX_STREAMS = 4            # how many streams to record at once
 CHECK_EVERY = 120          # seconds between "who's live?" checks
 RUN_MINUTES = int(os.environ.get("RUN_MINUTES", "330"))
 
-SECONDS_BEFORE = 40        # clip length before chat exploded
-SECONDS_AFTER = 12         # and after
+SECONDS_BEFORE = LEARNED.get("seconds_before", 40)   # clip length before chat exploded (learned from feedback)
+SECONDS_AFTER = LEARNED.get("seconds_after", 12)     # and after
 SEGMENT = 4                # recording chunk size in seconds
 KEEP_SECONDS = 240         # how much recent stream to keep on disk
 
@@ -131,10 +132,12 @@ class Watcher:
 
     # --- recording: yt-dlp pipes the live stream into ffmpeg, which saves 4s chunks
     def record(self):
-        dl = subprocess.Popen(
-            ["yt-dlp", "-q", "--no-part", "-f", "best[height<=1080]/best", "-o", "-", self.url],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-        )
+        if self.platform == "twitch":
+            # streamlink skips Twitch commercial breaks (feedback: "majority of this clip is a commercial break")
+            cmd = ["streamlink", "--twitch-disable-ads", "--stdout", self.url, "1080p60,1080p,936p60,720p60,720p,best"]
+        else:
+            cmd = ["yt-dlp", "-q", "--no-part", "-f", "best[height<=1080]/best", "-o", "-", self.url]
+        dl = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         ff = subprocess.Popen(
             ["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-c", "copy", "-map", "0",
              "-f", "segment", "-segment_time", str(SEGMENT), "-reset_timestamps", "1",
@@ -179,7 +182,8 @@ class Watcher:
         recent = done[-1][1] + done[-2][1]
         older = [h for _, h in done[:-2]]
         normal = (sum(older) / len(older)) * 2
-        if recent >= MIN_HYPE and recent >= SPIKE_X * normal and now - self.last_clip > COOLDOWN:
+        need = SPIKE_X * spike_mult(self.name)   # pickier for streamers you rate 👎
+        if recent >= MIN_HYPE and recent >= need * normal and now - self.last_clip > COOLDOWN:
             self.last_clip = now
             strength = round(recent / max(normal, 1), 1)
             log(f"[{self.name}] 🔥 chat spike x{strength} (hype {recent}) — clipping")
@@ -267,8 +271,8 @@ def renderer():
         if job is None:
             break
         try:
-            layout = random.choice(list(LAYOUTS))
-            words_per = random.choice(CAPTION_WORDS)
+            layout = weighted_choice(LAYOUTS, "layout_weight")
+            words_per = weighted_choice(CAPTION_WORDS, "words_weight")
             srt = os.path.join(OUT_DIR, job["id"] + ".srt")
             has_caps = has_audio(job["src"]) and make_srt(model, job["src"], srt, words_per)
             out = os.path.join(OUT_DIR, job["id"] + "_vertical.mp4")
@@ -330,6 +334,9 @@ def main():
         rt.start()
     log(f"Live watcher running for {RUN_MINUTES} minutes")
 
+    # streamers you rate 👍 get watched first when there are more live than MAX_STREAMS
+    WATCHLIST.sort(key=lambda s: -streamer_weight(s["name"]) if s["name"] != "ishowspeed" else -99)
+    log("learned:", "; ".join(LEARNED.get("notes", [])) or "nothing yet")
     while time.time() < stop_at:
         for n in [n for n, w in active.items() if not w.alive]:
             del active[n]

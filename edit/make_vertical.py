@@ -10,6 +10,7 @@ from faster_whisper import WhisperModel
 from fetch.twitch_clips import get_clips
 from edit.download import download, has_audio
 from edit.titles import make_title, make_description, make_tags
+from tools.learned import weighted_choice
 
 OUT_DIR = "output"
 HOW_MANY = 3
@@ -95,8 +96,8 @@ if __name__ == "__main__":
             continue
 
         # Pick this video's random options
-        layout = random.choice(list(LAYOUTS))
-        words_per = random.choice(CAPTION_WORDS)
+        layout = weighted_choice(LAYOUTS, "layout_weight")       # favours layouts you rated 👍
+        words_per = weighted_choice(CAPTION_WORDS, "words_weight")
 
         srt = os.path.join(OUT_DIR, f"{clip['id']}.srt")
         has_caps = make_srt(model, src, srt, words_per)

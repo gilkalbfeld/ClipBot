@@ -52,7 +52,8 @@ class GitHub:
                 if not m:
                     continue
                 cid, kind = m.groups()
-                c = clips.setdefault(cid, {"id": cid, "source": source})
+                c = clips.setdefault(cid, {"id": cid, "source": source, "assets": []})
+                c["assets"].append(a["id"])
                 if kind == "_vertical.mp4":
                     c["video_asset"] = a["id"]
                     c["size_mb"] = round(a["size"] / 1e6, 1)
@@ -119,6 +120,22 @@ class GitHub:
         }
         self.write_json(FEEDBACK_FILE, data, sha,
                         f"Feedback {'👍' if rating > 0 else '👎'}: {clip['id']}")
+
+    def delete_clip(self, clip):
+        """Removes a clip's files for good. Counts as a 👎 so the bot learns from it."""
+        data, sha = self.read_json(FEEDBACK_FILE)
+        prev = data.get(clip["id"], {})
+        data[clip["id"]] = {
+            "rating": -1,
+            "comment": (prev.get("comment") or "deleted").strip(),
+            "deleted": True,
+            "streamer": clip.get("streamer", ""),
+            "source": clip.get("source", ""),
+            "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+        self.write_json(FEEDBACK_FILE, data, sha, f"Deleted clip: {clip['id']}")
+        for aid in clip.get("assets", []):
+            self.s.delete(f"{API}/repos/{self.repo}/releases/assets/{aid}", timeout=30)
 
     # ---------- posted list ----------
     def posted(self):

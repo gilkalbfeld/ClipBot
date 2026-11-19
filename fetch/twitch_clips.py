@@ -2,6 +2,10 @@ import os
 import requests
 from datetime import datetime, timedelta, timezone
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tools.learned import streamer_weight  # noqa: E402
+
 CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 
@@ -87,7 +91,7 @@ def add_score(c):
     """Views per hour since the clip was made = how fast it's blowing up."""
     created = datetime.fromisoformat(c["created_at"].replace("Z", "+00:00"))
     hours = max((datetime.now(timezone.utc) - created).total_seconds() / 3600, 1)
-    boost = FAVORITES.get(c["broadcaster_name"].lower(), 1)
+    boost = FAVORITES.get(c["broadcaster_name"].lower(), 1) * streamer_weight(c["broadcaster_name"])
     c["score"] = round(c["view_count"] / hours * boost, 1)
     return c
 

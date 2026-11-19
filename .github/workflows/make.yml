@@ -24,6 +24,10 @@ jobs:
           python-version: "3.11"
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: pip install -r requirements.txt faster-whisper
+      - name: Learn from feedback
+        run: python tools/learn.py
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: python edit/make_vertical.py
         env:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
@@ -47,7 +51,7 @@ jobs:
         run: |
           git config user.name "clipbot"
           git config user.email "clipbot@users.noreply.github.com"
-          git add made_clips.json || exit 0
+          git add made_clips.json learned.json || exit 0
           git diff --cached --quiet && exit 0
           git commit -m "Update made clips list"
           git pull --rebase origin main

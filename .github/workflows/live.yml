@@ -23,7 +23,11 @@ jobs:
         with:
           python-version: "3.11"
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: pip install -r requirements.txt faster-whisper chat-downloader
+      - run: pip install -r requirements.txt faster-whisper chat-downloader streamlink
+      - name: Learn from feedback
+        run: python tools/learn.py
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Make sure the live-clips release exists
         run: gh release view live-clips >/dev/null 2>&1 || gh release create live-clips --title "Live clips" --notes "Clips cut live from chat spikes"
         env:

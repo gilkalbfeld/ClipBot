@@ -192,6 +192,39 @@ def copy_buttons(title, desc, key):
     </script>""", height=42)
 
 
+# ---------------- pop-ups ----------------
+@st.dialog("Post to YouTube")
+def post_dialog(c, title, desc):
+    st.markdown("**1. Download the video**")
+    st.download_button("⬇️  Download video", video_bytes(c["video_asset"]), file_name=f"{c['id']}.mp4",
+                       mime="video/mp4", use_container_width=True, type="primary")
+    st.markdown("**2. Copy the title and description**")
+    copy_buttons(title, desc, "dlg" + c["id"])
+    st.markdown("**3. Upload it on YouTube**")
+    st.link_button("Open YouTube upload ↗", "https://www.youtube.com/upload", use_container_width=True)
+    st.caption("On iPad you can also open the YouTube app → ＋ → Short → pick the downloaded video.")
+    st.markdown("**4. Done?**")
+    yt = st.text_input("YouTube link (optional)", placeholder="https://youtube.com/shorts/…")
+    if st.button("✅  Mark as posted", use_container_width=True):
+        gh.set_posted(c["id"], yt)
+        refresh()
+        st.rerun()
+
+
+@st.dialog("Delete this clip?")
+def delete_dialog(c, title):
+    st.write(f"**{title or c['id']}**")
+    st.write("This permanently removes the video. It can't be undone. "
+             "ClipBot will count it as a 👎 and learn from it.")
+    a, b = st.columns(2)
+    if a.button("Cancel", use_container_width=True):
+        st.rerun()
+    if b.button("🗑  Yes, delete", type="primary", use_container_width=True):
+        gh.delete_clip(c)
+        refresh()
+        st.rerun()
+
+
 # ---------------- clip card ----------------
 def card(c, posted, show_badge=False):
     title, desc = split_post(post_text(c["post_asset"])) if "post_asset" in c else ("", "")
@@ -246,15 +279,17 @@ def card(c, posted, show_badge=False):
             st.toast("Comment saved")
 
         if is_posted:
-            if st.button("↩ Mark as not posted", key="u" + c["id"], use_container_width=True):
+            p1, p2 = st.columns([3, 1], gap="small")
+            if p1.button("↩ Not posted", key="u" + c["id"], use_container_width=True):
                 gh.set_posted(c["id"], undo=True)
                 refresh()
                 st.rerun()
         else:
-            if st.button("Mark as posted", key="p" + c["id"], use_container_width=True):
-                gh.set_posted(c["id"])
-                refresh()
-                st.rerun()
+            p1, p2 = st.columns([3, 1], gap="small")
+            if p1.button("🚀  Post", key="p" + c["id"], type="primary", use_container_width=True):
+                post_dialog(c, title, desc)
+        if p2.button("🗑", key="del" + c["id"], use_container_width=True, help="Delete clip"):
+            delete_dialog(c, title)
 
 
 def grid(clips, posted, per_page=12, key="g", show_badge=False):
@@ -356,6 +391,20 @@ def page_analytics():
     tiles([("Total clips", len(clips)), ("Posted", len(posted)),
            ("Live clips", sum(c["source"] == "Live" for c in clips)),
            ("👍 rate", f"{round(100 * ups / len(fb))}%" if fb else "—")])
+    st.write("")
+    learned, _ = gh.read_json("learned.json")
+    with st.container(border=True):
+        st.subheader("🧠 What ClipBot learned")
+        if learned:
+            for n in learned.get("notes", []):
+                st.write("• " + n)
+            sw = learned.get("streamer_weight", {})
+            if sw:
+                st.caption("Streamer priority (higher = watched/ranked first): " +
+                           ", ".join(f"{nice(k)} ×{v}" for k, v in sorted(sw.items(), key=lambda x: -x[1])))
+            st.caption(f"Based on {learned.get('ratings', 0)} ratings · updated {ago(learned['updated'])}")
+        else:
+            st.write("Learning kicks in on the next bot run. Keep rating clips 👍/👎.")
     st.write("")
     by = Counter(nice(c["streamer"]) for c in clips)
     if by:
