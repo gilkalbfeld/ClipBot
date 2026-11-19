@@ -300,7 +300,8 @@ def renderer():
             log(f"✅ clip ready: {out} | {title}")
             if RELEASE_TAG:
                 subprocess.run(["gh", "release", "upload", RELEASE_TAG, out,
-                                os.path.join(OUT_DIR, job["id"] + "_post.txt"), "--clobber"])
+                                os.path.join(OUT_DIR, job["id"] + "_post.txt"),
+                                os.path.join(OUT_DIR, job["id"] + ".json"), "--clobber"])
         except Exception as e:
             log("render failed:", job["id"], str(e)[:200])
         finally:

@@ -32,6 +32,13 @@ jobs:
         with:
           name: vertical-clips
           path: output/
+      - name: Send clips to the dashboard
+        run: |
+          gh release view clips >/dev/null 2>&1 || gh release create clips --title "Clips" --notes "Scheduled clips"
+          ls output/*_vertical.mp4 >/dev/null 2>&1 || exit 0
+          gh release upload clips output/*_vertical.mp4 output/*_post.txt output/*.json --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Save list of made clips
         if: always()
         run: |

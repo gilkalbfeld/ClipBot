@@ -1,0 +1,124 @@
+"""Talks to GitHub: lists clips, gets video links, marks clips posted, starts runs."""
+import base64
+import json
+import re
+from datetime import datetime, timezone
+
+import requests
+
+API = "https://api.github.com"
+RELEASES = {"live-clips": "Live", "clips": "Scheduled"}
+POSTED_FILE = "posted.json"
+
+
+class GitHub:
+    def __init__(self, token, repo):
+        self.repo = repo
+        self.s = requests.Session()
+        self.s.headers.update({
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        })
+
+    def get(self, path, **kw):
+        r = self.s.get(f"{API}/repos/{self.repo}{path}", timeout=30, **kw)
+        r.raise_for_status()
+        return r
+
+    # ---------- clips ----------
+    def release_assets(self, tag):
+        try:
+            rel = self.get(f"/releases/tags/{tag}").json()
+        except requests.HTTPError:
+            return []
+        assets, page = [], 1
+        while True:
+            batch = self.get(f"/releases/{rel['id']}/assets",
+                             params={"per_page": 100, "page": page}).json()
+            assets += batch
+            if len(batch) < 100:
+                return assets
+            page += 1
+
+    def clips(self):
+        """One record per clip, newest first."""
+        clips = {}
+        for tag, source in RELEASES.items():
+            for a in self.release_assets(tag):
+                name = a["name"]
+                m = re.match(r"(.+?)(_vertical\.mp4|_post\.txt|\.json)$", name)
+                if not m:
+                    continue
+                cid, kind = m.groups()
+                c = clips.setdefault(cid, {"id": cid, "source": source})
+                if kind == "_vertical.mp4":
+                    c["video_asset"] = a["id"]
+                    c["size_mb"] = round(a["size"] / 1e6, 1)
+                    c["made_at"] = a["created_at"]
+                elif kind == "_post.txt":
+                    c["post_asset"] = a["id"]
+                else:
+                    c["json_asset"] = a["id"]
+        out = [c for c in clips.values() if "video_asset" in c]
+        for c in out:
+            c["streamer"] = guess_streamer(c)
+        out.sort(key=lambda c: c["made_at"], reverse=True)
+        return out
+
+    def asset_url(self, asset_id):
+        """Short-lived direct link to a release file (works in a video player)."""
+        r = self.s.get(f"{API}/repos/{self.repo}/releases/assets/{asset_id}",
+                       headers={"Accept": "application/octet-stream"},
+                       allow_redirects=False, timeout=30)
+        return r.headers.get("Location")
+
+    def asset_text(self, asset_id):
+        url = self.asset_url(asset_id)
+        return requests.get(url, timeout=30).content.decode("utf-8", "ignore") if url else ""
+
+    # ---------- posted list ----------
+    def posted(self):
+        try:
+            r = self.get(f"/contents/{POSTED_FILE}").json()
+            return json.loads(base64.b64decode(r["content"])), r["sha"]
+        except requests.HTTPError:
+            return {}, None
+
+    def set_posted(self, clip_id, youtube_url="", undo=False):
+        data, sha = self.posted()
+        if undo:
+            data.pop(clip_id, None)
+        else:
+            data[clip_id] = {
+                "posted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "youtube_url": youtube_url,
+            }
+        body = {
+            "message": f"{'Unmark' if undo else 'Mark'} posted: {clip_id}",
+            "content": base64.b64encode(json.dumps(data, indent=2).encode()).decode(),
+        }
+        if sha:
+            body["sha"] = sha
+        r = self.s.put(f"{API}/repos/{self.repo}/contents/{POSTED_FILE}", json=body, timeout=30)
+        r.raise_for_status()
+
+    # ---------- runs ----------
+    def start_workflow(self, file, inputs=None):
+        r = self.s.post(f"{API}/repos/{self.repo}/actions/workflows/{file}/dispatches",
+                        json={"ref": "main", "inputs": inputs or {}}, timeout=30)
+        r.raise_for_status()
+
+    def recent_runs(self, n=10):
+        return self.get("/actions/runs", params={"per_page": n}).json()["workflow_runs"]
+
+
+def split_post(text):
+    """post.txt -> (title, description)"""
+    title = text.strip().splitlines()[0] if text.strip() else ""
+    return title, text.strip()
+
+
+def guess_streamer(c):
+    m = re.match(r"(.+)_\d{8}_\d{6}$", c["id"])   # live clips: name_YYYYmmdd_HHMMSS
+    return m.group(1) if m else ""
