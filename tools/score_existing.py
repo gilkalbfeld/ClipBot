@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tools.judge import judge  # noqa: E402
+from tools.judge import judge, LAST_ERROR  # noqa: E402
 
 TAGS = ["live-clips", "clips"]
 
@@ -25,6 +25,7 @@ def main():
     if not os.environ.get("GEMINI_API_KEY"):
         sys.exit("GEMINI_API_KEY secret is missing")
     done = 0
+    fails = 0
     for tag in TAGS:
         names = assets(tag)
         clips = sorted(n[:-len("_vertical.mp4")] for n in names if n.endswith("_vertical.mp4"))
@@ -40,15 +41,22 @@ def main():
                         info = {}
                 if info.get("ai_score") is not None:
                     continue
-                subprocess.run(["gh", "release", "download", tag, "-p", f"{cid}_vertical.mp4", "-D", d,
-                                "--clobber"], check=True, capture_output=True)
+                r = subprocess.run(["gh", "release", "download", tag, "-p", f"{cid}_vertical.mp4", "-D", d,
+                                    "--clobber"], capture_output=True, text=True)
+                if r.returncode:
+                    print(f"{cid}: skipped (couldn't download — deleted?)")
+                    continue
                 video = os.path.join(d, f"{cid}_vertical.mp4")
                 streamer = info.get("streamer") or cid.rsplit("_", 2)[0]
                 v = judge(video, streamer, info.get("platform", "twitch"), 40)
                 os.remove(video)
                 if not v:
-                    print(f"{cid}: couldn't score (rate limit?)")
+                    fails += 1
+                    print(f"{cid}: couldn't score — {LAST_ERROR['text']}")
+                    if fails >= 6:
+                        sys.exit("Stopping: Gemini keeps failing (see reason above). Try again later.")
                     continue
+                fails = 0
                 info.update({"ai_score": v["score"], "ai_reason": v.get("reason", ""),
                              "ai_problems": v.get("problems", []), "streamer": streamer})
                 jp = os.path.join(d, f"{cid}.json")

@@ -13,6 +13,8 @@ import time
 
 import requests
 
+LAST_ERROR = {"text": ""}   # why the last judge() call failed (for logs)
+
 MODELS = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"]
 
 def pick_models(api_key, preferred):
@@ -79,7 +81,8 @@ def judge(video, streamer, platform, spike_at):
                 r = requests.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                     headers={"x-goog-api-key": key}, json=body, timeout=120)
-            except requests.RequestException:
+            except requests.RequestException as e:
+                LAST_ERROR["text"] = f"{model}: {str(e)[:120]}"
                 continue
             if r.status_code == 400 and "thinking" in r.text.lower():
                 body["generationConfig"].pop("thinkingConfig", None)
@@ -92,6 +95,7 @@ def judge(video, streamer, platform, spike_at):
                     return out
                 except (KeyError, IndexError, ValueError):
                     continue
+            LAST_ERROR["text"] = f"{model}: {r.status_code} {r.text[:200]}"
             if r.status_code == 429:      # free-tier rate limit: wait a bit
                 time.sleep(20)
                 break
