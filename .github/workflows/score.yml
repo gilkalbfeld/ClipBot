@@ -2,6 +2,10 @@ name: AI score clips
 
 on:
   workflow_dispatch:
+    inputs:
+      redo:
+        description: "Rewrite titles for clips that already have one (1 = yes)"
+        default: "0"
 
 permissions:
   contents: write
@@ -24,3 +28,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          REDO: ${{ inputs.redo || '0' }}

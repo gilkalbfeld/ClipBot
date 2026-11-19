@@ -132,14 +132,20 @@ Transcript (with seconds):
 Based on what the streamer says and reacts to, reply ONLY with JSON:
 {{"score": 1-10 (how funny/hype this moment probably is; 7+ great, 5 mid, 1-3 nothing happens / calm talking),
   "reason": "max 12 words, what happens",
-  "title": "YouTube Shorts title about what ACTUALLY happens. Specific, punchy, max 70 chars, curiosity hook,
-            include {streamer_nick}, 1 emoji at the end. Don't spoil the payoff. NO generic templates like
-            'can't believe what happened', 'was NOT ready', 'found something crazy'.",
+  "title": "YouTube Shorts title about what ACTUALLY happens in THIS clip — use a specific detail from the
+            transcript (a quote, a character, a car, a place, the mistake, the target). Max 65 chars, include
+            {streamer_nick}, 1 emoji at the end, curiosity hook, don't spoil the payoff.
+            BANNED phrases: 'loses his mind', 'can't believe', 'was NOT ready', 'found something crazy',
+            'goes crazy', 'freaks out', 'insane moment', 'you won't believe'.
+            Vary the style: a quote ("\"I'm NOT paying that\" — Kai Cenat 💀"), a situation
+            ("Kai Cenat tried to rob a gas station with a fishing rod 🎣"), a question
+            ("Why did CaseOh just drive into the ocean? 🌊"), or a POV.
+            Don't reuse these recent titles' wording: {avoid}",
   "summary": "2-3 plain sentences on what happens (characters like Jason/Lucia, places, cars, actions, quotes). For search.",
   "tags": ["5-8 short search tags"]}}"""
 
 
-def judge_text(transcript, streamer, platform="twitch", stream_title=""):
+def judge_text(transcript, streamer, platform="twitch", stream_title="", avoid=()):
     """Cheaper judge: reads the transcript instead of watching the video (works when video quota is used up)."""
     key = os.environ.get("GEMINI_API_KEY")
     if not key or not transcript.strip():
@@ -147,8 +153,8 @@ def judge_text(transcript, streamer, platform="twitch", stream_title=""):
     body = {
         "contents": [{"parts": [{"text": TEXT_PROMPT.format(
             streamer_nick=nick(streamer), platform=platform, stream_title=stream_title or "?",
-            transcript=transcript[:6000])}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.6,
+            transcript=transcript[:6000], avoid=json.dumps(list(avoid)[-12:]))}]}],
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.9,
                              "thinkingConfig": {"thinkingBudget": 256}},
     }
     models = pick_models(key, MODELS)

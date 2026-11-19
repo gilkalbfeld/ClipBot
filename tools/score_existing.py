@@ -15,6 +15,8 @@ from tools.judge import judge, judge_text, transcribe, LAST_ERROR  # noqa: E402
 
 # "text" (default) = read the transcript (cheap, fits the free tier); "video" = watch the video
 MODE = os.environ.get("JUDGE_MODE", "text")
+REDO = os.environ.get("REDO") == "1"   # rewrite titles even for clips that already have one
+recent_titles = []
 _whisper = []
 
 
@@ -51,7 +53,7 @@ def main():
                         info = json.load(open(os.path.join(d, f"{cid}.json")))
                     except (OSError, ValueError):
                         info = {}
-                if info.get("ai_score") is not None:
+                if info.get("ai_score") is not None and not REDO:
                     continue
                 r = subprocess.run(["gh", "release", "download", tag, "-p", f"{cid}_vertical.mp4", "-D", d,
                                     "--clobber"], capture_output=True, text=True)
@@ -65,7 +67,7 @@ def main():
                     v = judge(video, streamer, info.get("platform", "twitch"), 40)
                 if not v:
                     v = judge_text(transcribe(video, whisper()), streamer, info.get("platform", "twitch"),
-                                   info.get("stream_title", ""))
+                                   info.get("stream_title", ""), recent_titles)
                 os.remove(video)
                 if not v:
                     fails += 1
@@ -76,6 +78,8 @@ def main():
                         sys.exit("Stopping: Gemini keeps failing (see reason above). Try again later.")
                     continue
                 fails = 0
+                if v.get("title"):
+                    recent_titles.append(v["title"])
                 time.sleep(4 if MODE == "text" else 12)   # stay under the free tier's per-minute limit
                 info.update({"ai_score": v["score"], "ai_reason": v.get("reason", ""),
                              "ai_problems": v.get("problems", []), "streamer": streamer,

@@ -67,6 +67,7 @@ RELEASE_TAG = os.environ.get("RELEASE_TAG", "")  # if set, upload clips here as 
 stop_at = time.time() + RUN_MINUTES * 60
 render_queue = queue.Queue()
 stats = {"rejected": 0}
+recent_titles = []   # so the AI doesn't keep writing the same title
 active = {}          # name -> Watcher
 lock = threading.Lock()
 
@@ -279,7 +280,7 @@ def renderer():
             verdict = judge(job["src"], job["name"], job["platform"], SECONDS_BEFORE)
             if not verdict:   # video quota used up -> read the transcript instead
                 verdict = judge_text(transcribe(job["src"], model), job["name"], job["platform"],
-                                     job["stream_title"])
+                                     job["stream_title"], recent_titles)
             if verdict:
                 log(f"[{job['name']}] 🤖 AI score {verdict['score']}/10 — {verdict.get('reason', '')}")
                 if verdict["score"] < MIN_AI_SCORE:
@@ -307,6 +308,7 @@ def renderer():
             # Title/description helpers expect a clip-like dict
             clip = {"broadcaster_name": job["name"], "title": "", "url": job["url"]}
             title = (verdict or {}).get("title") or make_title(clip)   # AI writes a title about what happens
+            recent_titles.append(title)
             desc = make_description(clip, title, (verdict or {}).get("tags", []))
             info = {
                 "youtube_title": title,
