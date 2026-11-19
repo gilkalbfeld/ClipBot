@@ -120,3 +120,68 @@ def judge(video, streamer, platform, spike_at):
                 break
         time.sleep(3)
     return None
+
+
+TEXT_PROMPT = """You are writing for ViceClips, a YouTube Shorts channel of funny / hype GTA 6 moments from streamers.
+Below is the transcript of a ~50 second clip from {streamer_nick}'s {platform} stream (GTA 6). Chat went crazy during it.
+Stream title: {stream_title}
+
+Transcript (with seconds):
+{transcript}
+
+Based on what the streamer says and reacts to, reply ONLY with JSON:
+{{"score": 1-10 (how funny/hype this moment probably is; 7+ great, 5 mid, 1-3 nothing happens / calm talking),
+  "reason": "max 12 words, what happens",
+  "title": "YouTube Shorts title about what ACTUALLY happens. Specific, punchy, max 70 chars, curiosity hook,
+            include {streamer_nick}, 1 emoji at the end. Don't spoil the payoff. NO generic templates like
+            'can't believe what happened', 'was NOT ready', 'found something crazy'.",
+  "summary": "2-3 plain sentences on what happens (characters like Jason/Lucia, places, cars, actions, quotes). For search.",
+  "tags": ["5-8 short search tags"]}}"""
+
+
+def judge_text(transcript, streamer, platform="twitch", stream_title=""):
+    """Cheaper judge: reads the transcript instead of watching the video (works when video quota is used up)."""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key or not transcript.strip():
+        return None
+    body = {
+        "contents": [{"parts": [{"text": TEXT_PROMPT.format(
+            streamer_nick=nick(streamer), platform=platform, stream_title=stream_title or "?",
+            transcript=transcript[:6000])}]}],
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.6,
+                             "thinkingConfig": {"thinkingBudget": 256}},
+    }
+    for attempt in range(3):
+        for model in pick_models(key, MODELS):
+            try:
+                r = requests.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                    headers={"x-goog-api-key": key}, json=body, timeout=60)
+            except requests.RequestException as e:
+                LAST_ERROR["text"] = f"{model}: {str(e)[:120]}"
+                continue
+            if r.status_code == 400 and "thinking" in r.text.lower():
+                body["generationConfig"].pop("thinkingConfig", None)
+                continue
+            if r.status_code == 200:
+                try:
+                    out = json.loads(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+                    out["score"] = float(out.get("score", 0))
+                    out["model"] = model + " (transcript)"
+                    return out
+                except (KeyError, IndexError, ValueError):
+                    continue
+            LAST_ERROR["text"] = f"{model}: {r.status_code} " + " ".join(r.text.split())[:300]
+            if r.status_code == 429:
+                time.sleep(15)
+                break
+        time.sleep(3)
+    return None
+
+
+def transcribe(video, model=None):
+    """Transcript with timestamps, e.g. '[12s] bro no way'."""
+    from faster_whisper import WhisperModel
+    model = model or WhisperModel("base", device="cpu", compute_type="int8")
+    segs, _ = model.transcribe(video, vad_filter=True)
+    return "\n".join(f"[{int(s.start)}s] {s.text.strip()}" for s in segs)

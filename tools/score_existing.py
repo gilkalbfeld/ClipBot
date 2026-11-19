@@ -11,7 +11,18 @@ import tempfile
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tools.judge import judge, LAST_ERROR  # noqa: E402
+from tools.judge import judge, judge_text, transcribe, LAST_ERROR  # noqa: E402
+
+# "text" (default) = read the transcript (cheap, fits the free tier); "video" = watch the video
+MODE = os.environ.get("JUDGE_MODE", "text")
+_whisper = []
+
+
+def whisper():
+    if not _whisper:
+        from faster_whisper import WhisperModel
+        _whisper.append(WhisperModel("base", device="cpu", compute_type="int8"))
+    return _whisper[0]
 
 TAGS = ["live-clips", "clips"]
 
@@ -49,7 +60,12 @@ def main():
                     continue
                 video = os.path.join(d, f"{cid}_vertical.mp4")
                 streamer = info.get("streamer") or cid.rsplit("_", 2)[0]
-                v = judge(video, streamer, info.get("platform", "twitch"), 40)
+                v = None
+                if MODE == "video":
+                    v = judge(video, streamer, info.get("platform", "twitch"), 40)
+                if not v:
+                    v = judge_text(transcribe(video, whisper()), streamer, info.get("platform", "twitch"),
+                                   info.get("stream_title", ""))
                 os.remove(video)
                 if not v:
                     fails += 1
@@ -60,7 +76,7 @@ def main():
                         sys.exit("Stopping: Gemini keeps failing (see reason above). Try again later.")
                     continue
                 fails = 0
-                time.sleep(12)   # stay under the free tier's per-minute limit
+                time.sleep(4 if MODE == "text" else 12)   # stay under the free tier's per-minute limit
                 info.update({"ai_score": v["score"], "ai_reason": v.get("reason", ""),
                              "ai_problems": v.get("problems", []), "streamer": streamer,
                              "ai_summary": v.get("summary", ""), "ai_tags": v.get("tags", [])})

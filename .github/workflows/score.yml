@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: pip install requests
+      - run: pip install requests faster-whisper
       - run: python tools/score_existing.py
         env:
           GH_TOKEN: ${{ github.token }}

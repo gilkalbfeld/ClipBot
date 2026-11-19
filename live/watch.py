@@ -266,7 +266,7 @@ def renderer():
     from edit.make_vertical import LAYOUTS, CAPTION_WORDS, make_srt, make_vertical
     from edit.download import has_audio
     from edit.titles import make_title, make_description, make_tags
-    from tools.judge import judge
+    from tools.judge import judge, judge_text, transcribe
 
     model = WhisperModel("base", device="cpu", compute_type="int8")
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -277,6 +277,9 @@ def renderer():
         try:
             # ---- AI judge: does something actually happen in this clip?
             verdict = judge(job["src"], job["name"], job["platform"], SECONDS_BEFORE)
+            if not verdict:   # video quota used up -> read the transcript instead
+                verdict = judge_text(transcribe(job["src"], model), job["name"], job["platform"],
+                                     job["stream_title"])
             if verdict:
                 log(f"[{job['name']}] 🤖 AI score {verdict['score']}/10 — {verdict.get('reason', '')}")
                 if verdict["score"] < MIN_AI_SCORE:
