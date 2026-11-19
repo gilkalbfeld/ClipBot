@@ -1,0 +1,17 @@
+name: Make thumbnails
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  thumbs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: python tools/thumbs.py
+        env:
+          GH_TOKEN: ${{ github.token }}

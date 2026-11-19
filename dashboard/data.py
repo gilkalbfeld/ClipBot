@@ -48,7 +48,7 @@ class GitHub:
         for tag, source in RELEASES.items():
             for a in self.release_assets(tag):
                 name = a["name"]
-                m = re.match(r"(.+?)(_vertical\.mp4|_post\.txt|\.json)$", name)
+                m = re.match(r"(.+?)(_vertical\.mp4|_post\.txt|_thumb\.jpg|\.json)$", name)
                 if not m:
                     continue
                 cid, kind = m.groups()
@@ -59,6 +59,8 @@ class GitHub:
                     c["made_at"] = a["created_at"]
                 elif kind == "_post.txt":
                     c["post_asset"] = a["id"]
+                elif kind == "_thumb.jpg":
+                    c["thumb_asset"] = a["id"]
                 else:
                     c["json_asset"] = a["id"]
         out = [c for c in clips.values() if "video_asset" in c]
@@ -73,6 +75,12 @@ class GitHub:
                        headers={"Accept": "application/octet-stream"},
                        allow_redirects=False, timeout=30)
         return r.headers.get("Location")
+
+    def asset_bytes(self, asset_id):
+        """Downloads a release file (video, thumbnail) so the dashboard can serve it itself.
+        Needed because iPad Safari won't play GitHub's direct links."""
+        url = self.asset_url(asset_id)
+        return requests.get(url, timeout=120).content if url else b""
 
     def asset_text(self, asset_id):
         url = self.asset_url(asset_id)

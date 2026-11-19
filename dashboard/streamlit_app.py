@@ -89,6 +89,12 @@ div[data-testid="stVerticalBlockBorderWrapper"] {{ background:linear-gradient(18
 .b-ok {{ background:rgba(34,197,94,.15); color:#4ade80; }}
 .b-bad {{ background:rgba(239,68,68,.15); color:#f87171; }}
 h1 {{ font-weight:800 !important; letter-spacing:-.03em; }}
+.meta {{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+.nothumb {{ aspect-ratio:4/3; border-radius:12px; background:linear-gradient(135deg,#2a1638,#1a1030);
+  display:flex; align-items:center; justify-content:center; font-size:2.2rem; }}
+div[data-testid="stImage"] img {{ border-radius:12px; aspect-ratio:4/3; object-fit:cover; }}
+div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button {{ padding:.35rem .4rem; min-height:2.3rem; }}
+[data-testid="stToolbarActions"], [data-testid="stStatusWidget"] {{ display:none; }}
 .run {{ display:flex; justify-content:space-between; align-items:center; padding:.75rem 1rem; margin-bottom:.5rem;
   background:#15121c; border:1px solid rgba(255,255,255,.06); border-radius:12px; color:#ddd8e8; }}
 .run a {{ color:#8d86a0; }}
@@ -112,6 +118,16 @@ def load_posted():
 @st.cache_data(ttl=200)
 def video_url(asset_id):
     return gh.asset_url(asset_id)
+
+
+@st.cache_data(ttl=None, max_entries=500, show_spinner=False)
+def thumb_bytes(asset_id):
+    return gh.asset_bytes(asset_id)
+
+
+@st.cache_data(ttl=None, max_entries=4, show_spinner="Loading video…")
+def video_bytes(asset_id):
+    return gh.asset_bytes(asset_id)
 
 
 @st.cache_data(ttl=None)
@@ -159,10 +175,10 @@ def copy_buttons(title, desc, key):
     components.html(f"""
     <style>
       body{{margin:0;font-family:Inter,sans-serif}} .r{{display:flex;gap:8px}}
-      button{{flex:1;padding:8px 0;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#1a1622;
+      button{{flex:1;padding:8px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#1a1622;
         color:#e9e5f2;font-size:13px;font-weight:500;cursor:pointer}} button:hover{{border-color:#ff3ea5}}
     </style>
-    <div class="r"><button id="t">Copy Title</button><button id="d">Copy Description</button></div>
+    <div class="r"><button id="t">📋 Title</button><button id="d">📋 Description</button></div>
     <script>
       function cp(txt, b, label){{
         const done=()=>{{b.textContent='Copied ✓';setTimeout(()=>b.textContent=label,1400)}};
@@ -171,20 +187,31 @@ def copy_buttons(title, desc, key):
         if(navigator.clipboard){{navigator.clipboard.writeText(txt).then(done,fb)}}else{{fb()}}
       }}
       const T={json.dumps(title)}, D={json.dumps(desc)};
-      document.getElementById('t').onclick=e=>cp(T,e.target,'Copy Title');
-      document.getElementById('d').onclick=e=>cp(D,e.target,'Copy Description');
+      document.getElementById('t').onclick=e=>cp(T,e.target,'📋 Title');
+      document.getElementById('d').onclick=e=>cp(D,e.target,'📋 Description');
     </script>""", height=42)
 
 
 # ---------------- clip card ----------------
 def card(c, posted, show_badge=False):
     title, desc = split_post(post_text(c["post_asset"])) if "post_asset" in c else ("", "")
-    url = video_url(c["video_asset"])
     is_posted = c["id"] in posted
     fb = load_feedback().get(c["id"], {})
+    playing = st.session_state.get("playing") == c["id"]
     with st.container(border=True):
-        if url:
-            st.video(url)
+        if playing:
+            st.video(video_bytes(c["video_asset"]), format="video/mp4", autoplay=True)
+            if st.button("✕ Close video", key="close" + c["id"], use_container_width=True):
+                st.session_state.playing = None
+                st.rerun()
+        else:
+            if "thumb_asset" in c:
+                st.image(thumb_bytes(c["thumb_asset"]), use_container_width=True)
+            else:
+                st.markdown('<div class="nothumb">🎬</div>', unsafe_allow_html=True)
+            if st.button("▶  Play", key="play" + c["id"], use_container_width=True):
+                st.session_state.playing = c["id"]
+                st.rerun()
         badge = ""
         if show_badge:
             badge = ('<span class="badge b-posted">Posted</span>' if is_posted
@@ -199,7 +226,7 @@ def card(c, posted, show_badge=False):
         copy_buttons(title, desc, c["id"])
 
         # feedback: 👍 👎 + comment
-        up, down, box = st.columns([1, 1, 4], vertical_alignment="center")
+        up, down, box = st.columns([1, 1, 3], gap="small", vertical_alignment="center")
         r = fb.get("rating", 0)
         comment = box.text_input("Feedback", value=fb.get("comment", ""), placeholder="Add feedback…",
                                  label_visibility="collapsed", key="c" + c["id"])

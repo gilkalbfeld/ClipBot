@@ -36,7 +36,10 @@ jobs:
         run: |
           gh release view clips >/dev/null 2>&1 || gh release create clips --title "Clips" --notes "Scheduled clips"
           ls output/*_vertical.mp4 >/dev/null 2>&1 || exit 0
-          gh release upload clips output/*_vertical.mp4 output/*_post.txt output/*.json --clobber
+          for f in output/*_vertical.mp4; do
+            ffmpeg -loglevel error -y -ss 2 -i "$f" -frames:v 1 -vf "crop=iw:iw*3/4:0:(ih-iw*3/4)/2,scale=640:-2" -q:v 4 "${f%_vertical.mp4}_thumb.jpg"
+          done
+          gh release upload clips output/*_vertical.mp4 output/*_thumb.jpg output/*_post.txt output/*.json --clobber
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Save list of made clips

@@ -297,9 +297,12 @@ def renderer():
                 json.dump(info, f, indent=2)
             with open(os.path.join(OUT_DIR, job["id"] + "_post.txt"), "w", encoding="utf-8") as f:
                 f.write(desc)
+            thumb = os.path.join(OUT_DIR, job["id"] + "_thumb.jpg")
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", "2", "-i", out, "-frames:v", "1",
+                            "-vf", "crop=iw:iw*3/4:0:(ih-iw*3/4)/2,scale=640:-2", "-q:v", "4", thumb])
             log(f"✅ clip ready: {out} | {title}")
             if RELEASE_TAG:
-                subprocess.run(["gh", "release", "upload", RELEASE_TAG, out,
+                subprocess.run(["gh", "release", "upload", RELEASE_TAG, out, thumb,
                                 os.path.join(OUT_DIR, job["id"] + "_post.txt"),
                                 os.path.join(OUT_DIR, job["id"] + ".json"), "--clobber"])
         except Exception as e:
