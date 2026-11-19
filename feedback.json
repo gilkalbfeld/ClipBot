@@ -252,5 +252,13 @@
     "streamer": "caseoh_",
     "source": "Live",
     "at": "2026-11-19T17:32:58+00:00"
+  },
+  "caseoh__20261119_061201": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "caseoh_",
+    "source": "Live",
+    "at": "2026-11-19T17:33:27+00:00"
   }
 }
