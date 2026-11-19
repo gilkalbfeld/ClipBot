@@ -57,6 +57,7 @@ jobs:
           git add made_clips.json || exit 0
           git diff --cached --quiet && exit 0
           git commit -m "Update made clips list"
+          git checkout -- . 2>/dev/null || true
           git pull --rebase origin main
           git push
       - name: Report result to the dashboard
