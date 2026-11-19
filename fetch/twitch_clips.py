@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tools.learned import streamer_weight  # noqa: E402
+from tools.learned import LEARNED, streamer_weight  # noqa: E402
 
 CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
@@ -20,7 +20,7 @@ FAVORITES = {"ishowspeed": 3, "lacy": 2}
 FAMOUS_ANY_GAME = False  # True = any game, False = only their GTA clips
 
 LANGUAGE = "en"      # "en" = English only
-MIN_VIEWS = 1000     # raise to be pickier
+MIN_VIEWS = LEARNED.get("min_views", 1000)   # raise to be pickier (can be set from the dashboard chat)
 MAX_SECONDS = 60     # short clips only
 PAGES = 3            # more pages = bigger pool of clips
 
@@ -81,7 +81,8 @@ def fetch_clips(params, headers):
 
 def keep(c):
     return (
-        c["view_count"] >= MIN_VIEWS
+        streamer_weight(c["broadcaster_name"]) > 0
+        and c["view_count"] >= MIN_VIEWS
         and c["duration"] <= MAX_SECONDS
         and c.get("language") == LANGUAGE
     )

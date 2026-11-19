@@ -351,6 +351,8 @@ def main():
         for s in WATCHLIST:
             if len(active) >= MAX_STREAMS or s["name"] in active:
                 continue
+            if streamer_weight(s["name"]) <= 0:   # you told ClipBot to stop clipping them
+                continue
             try:
                 if s["platform"] == "twitch" and s["name"] in tw:
                     title, game = tw[s["name"]]

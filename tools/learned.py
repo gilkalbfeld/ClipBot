@@ -13,7 +13,10 @@ def weighted_choice(options, weights_key):
     """Pick an option, favouring ones you rated 👍 (still tries others sometimes)."""
     w = LEARNED.get(weights_key, {})
     options = list(options)
-    return random.choices(options, weights=[w.get(str(o), 1.0) for o in options])[0]
+    weights = [w.get(str(o), 1.0) for o in options]
+    if sum(weights) <= 0:
+        weights = [1.0] * len(options)
+    return random.choices(options, weights=weights)[0]
 
 
 def streamer_weight(name):

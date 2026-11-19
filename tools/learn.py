@@ -124,6 +124,16 @@ def main():
             learned[k] = v
     for line in chat.get("instructions", [])[-5:]:
         notes.append("You told me: " + line)
+    # ---- what you told ClipBot in the dashboard chat (instructions.json) wins over guesses
+    ins = load("instructions.json", {})
+    for k, v in ins.get("settings", {}).items():
+        learned[k] = v
+        notes.append(f"You told me: {k} = {v}")
+    for key, target in (("layouts", "layout_weight"), ("caption_words", "words_weight"),
+                        ("streamers", "streamer_weight")):
+        for k, v in ins.get(key, {}).items():
+            learned[target][k] = v
+    learned["rules"] = ins.get("rules", [])
     if not notes:
         notes.append("Not enough feedback yet to change anything — keep rating clips.")
 

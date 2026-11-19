@@ -14,9 +14,11 @@ import streamlit.components.v1 as components
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import brain  # noqa: E402
+import brain  # noqa: E402
 import data  # noqa: E402
 
 importlib.reload(data)
+importlib.reload(brain)
 importlib.reload(brain)  # pick up changes to data.py on every update, no reboot needed
 GitHub, split_post = data.GitHub, data.split_post
 
@@ -395,6 +397,8 @@ def page_run():
     st.write("")
     chat_box()
     st.write("")
+    chat_box()
+
     st.subheader("Recent runs")
     for r in load_runs():
         if r["status"] != "completed":
@@ -467,6 +471,48 @@ def chat_box():
                 cs["overrides"] = {}
                 gh.write_json("chat_settings.json", cs, sha, "ClipBot chat: reset settings")
                 st.rerun()
+
+
+STREAMERS = ["ishowspeed (YouTube)", "lacy", "kaicenat", "xqc", "jynxzi", "caseoh_", "adinross", "ohnepixel"]
+
+
+def chat_box():
+    st.write("")
+    with st.container(border=True):
+        st.subheader("💬 Talk to ClipBot")
+        st.caption("Tell it what you notice — e.g. “clips start too early”, “stop clipping Jynxzi”, "
+                   "“use fill layout more”. It remembers and the bot follows it on every run.")
+        key = st.secrets.get("GEMINI_API_KEY", "")
+        if not key:
+            st.warning("Add GEMINI_API_KEY in Settings → Secrets to turn this on.")
+            return
+        ins, sha = gh.read_json("instructions.json")
+        history = ins.get("chat", [])
+        for m in history[-10:]:
+            with st.chat_message("user" if m["role"] == "user" else "assistant",
+                                 avatar=None if m["role"] == "user" else "🌴"):
+                st.write(m["text"])
+                for ch in m.get("changes", []):
+                    st.caption("✓ " + ch)
+        if ins.get("rules"):
+            with st.expander(f"📌 What ClipBot remembers ({len(ins['rules'])})"):
+                for r in ins["rules"]:
+                    st.write("• " + r)
+        msg = st.chat_input("Message ClipBot…")
+        if msg:
+            learned, _ = gh.read_json("learned.json")
+            with st.spinner("ClipBot is thinking…"):
+                try:
+                    result = brain.ask(key, msg, history, ins, learned, load_feedback(), STREAMERS)
+                except Exception as e:
+                    st.error(f"Couldn't reach Gemini: {str(e)[:300]}")
+                    return
+            changes = brain.apply(ins, result)
+            history += [{"role": "user", "text": msg},
+                        {"role": "bot", "text": result.get("reply", ""), "changes": changes}]
+            ins["chat"] = history[-40:]
+            gh.write_json("instructions.json", ins, sha, "ClipBot chat: " + msg[:60])
+            st.rerun()
 
 
 def page_analytics():
