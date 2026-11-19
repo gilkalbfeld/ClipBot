@@ -211,11 +211,42 @@ def copy_buttons(title, desc, key):
 
 
 # ---------------- pop-ups ----------------
+def share_button(title, fname):
+    """Opens the iPad share sheet with the video attached (→ YouTube or Save Video)."""
+    components.html(f"""
+    <style>body{{margin:0;font-family:Inter,sans-serif}}
+      button{{width:100%;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:600;color:#fff;
+        background:linear-gradient(90deg,#ff3ea5,#d946ef);cursor:pointer}} #s{{color:#a8a1b8;font-size:12px;margin-top:6px}}
+    </style>
+    <button id="b">⏳ Getting video ready…</button><div id="s"></div>
+    <script>
+      let file=null; const b=document.getElementById('b'), s=document.getElementById('s');
+      function find(){{
+        const vids=[...window.parent.document.querySelectorAll('div[role="dialog"] video, video')];
+        const v=vids.reverse().find(x=>x.src||x.querySelector('source')); if(!v) return null;
+        return v.src || v.querySelector('source').src;
+      }}
+      async function prep(n=0){{
+        const src=find(); if(!src){{ if(n<20) return setTimeout(()=>prep(n+1),500); s.textContent='Video not found'; return; }}
+        try{{ const blob=await (await fetch(src)).blob();
+          file=new File([blob], {json.dumps(fname)}, {{type:'video/mp4'}});
+          if(navigator.canShare && navigator.canShare({{files:[file]}})){{ b.textContent='📲 Share → YouTube / Save Video'; }}
+          else {{ b.textContent='Sharing not supported here'; s.textContent='Use Download below instead.'; }}
+        }}catch(e){{ b.textContent='Sharing not available'; s.textContent='Use Download below instead.'; }}
+      }}
+      b.onclick=async()=>{{ if(!file) return; try{{ await navigator.share({{files:[file], title:{json.dumps(title)}}}); }}
+        catch(e){{ if(e.name!=='AbortError') s.textContent='Share failed: '+e.message+' — use Download below.'; }} }};
+      prep();
+    </script>""", height=78)
+
+
 @st.dialog("Post to YouTube")
 def post_dialog(c, title, desc):
-    st.markdown("**1. Download the video**")
-    st.download_button("⬇️  Download video", video_bytes(c["video_asset"]), file_name=f"{c['id']}.mp4",
-                       mime="video/mp4", use_container_width=True, type="primary")
+    st.markdown("**1. Get the video on your iPad**")
+    st.video(video_bytes(c["video_asset"]), format="video/mp4")
+    share_button(title, f"{c['id']}.mp4")
+    st.download_button("⬇️  Or download the file", video_bytes(c["video_asset"]), file_name=f"{c['id']}.mp4",
+                       mime="video/mp4", use_container_width=True)
     st.markdown("**2. Copy the title and description**")
     copy_buttons(title, desc, "dlg" + c["id"])
     st.markdown("**3. Upload it on YouTube**")
