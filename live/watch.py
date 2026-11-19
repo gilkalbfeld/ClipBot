@@ -66,6 +66,7 @@ RELEASE_TAG = os.environ.get("RELEASE_TAG", "")  # if set, upload clips here as 
 
 stop_at = time.time() + RUN_MINUTES * 60
 render_queue = queue.Queue()
+stats = {"rejected": 0}
 active = {}          # name -> Watcher
 lock = threading.Lock()
 
@@ -265,6 +266,7 @@ def renderer():
     from edit.make_vertical import LAYOUTS, CAPTION_WORDS, make_srt, make_vertical
     from edit.download import has_audio
     from edit.titles import make_title, make_description, make_tags
+    from tools.judge import judge
 
     model = WhisperModel("base", device="cpu", compute_type="int8")
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -273,6 +275,25 @@ def renderer():
         if job is None:
             break
         try:
+            # ---- AI judge: does something actually happen in this clip?
+            verdict = judge(job["src"], job["name"], job["platform"], SECONDS_BEFORE)
+            if verdict:
+                log(f"[{job['name']}] 🤖 AI score {verdict['score']}/10 — {verdict.get('reason', '')}")
+                if verdict["score"] < MIN_AI_SCORE:
+                    log(f"[{job['name']}] ✗ thrown out (below {MIN_AI_SCORE})")
+                    stats["rejected"] += 1
+                    continue
+                ms, me = verdict.get("moment_start"), verdict.get("moment_end")
+                if AI_TRIM and isinstance(ms, (int, float)) and isinstance(me, (int, float)) and me - ms >= 6:
+                    a, b = max(0, ms - 3), me + 3
+                    trimmed = job["src"] + ".trim.mp4"
+                    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{a:.2f}", "-to", f"{b:.2f}",
+                                        "-i", job["src"], "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+                                        "-c:a", "aac", trimmed])
+                    if r.returncode == 0:
+                        os.replace(trimmed, job["src"])
+                        w0 = job["window_utc"][0]
+                        job["window_utc"] = [w0 + a, w0 + b]
             layout = weighted_choice(LAYOUTS, "layout_weight")
             words_per = weighted_choice(CAPTION_WORDS, "words_weight")
             srt = os.path.join(OUT_DIR, job["id"] + ".srt")
@@ -296,6 +317,9 @@ def renderer():
                 "hype_strength": job["strength"],
                 "made_at_utc": job["time"],
                 "window_utc": job["window_utc"],
+                "ai_score": verdict["score"] if verdict else None,
+                "ai_reason": verdict.get("reason", "") if verdict else "",
+                "ai_problems": verdict.get("problems", []) if verdict else [],
                 "captions": bool(has_caps),
                 "layout": layout,
                 "caption_words": words_per,
@@ -368,7 +392,7 @@ def main():
         log("live now:", ", ".join(active) or "nobody")
         time.sleep(CHECK_EVERY)
 
-    log("time's up — finishing clips in progress")
+    log(f"time's up — finishing clips in progress (AI threw out {stats['rejected']} so far)")
     for w in active.values():
         w.alive = False
     time.sleep(SECONDS_AFTER + SEGMENT + 5)

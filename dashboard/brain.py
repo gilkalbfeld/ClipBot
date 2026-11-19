@@ -15,6 +15,7 @@ LIMITS = {
     "seconds_after": (6, 30, "seconds kept after the moment (live clips)"),
     "spike_x": (1.6, 5.0, "how much busier chat must be than normal to clip (higher = pickier, fewer clips)"),
     "min_views": (0, 20000, "minimum Twitch views for scheduled 'top GTA clips'"),
+    "min_ai_score": (1, 10, "AI judge watches each live clip and scores it 1-10; clips below this are thrown out"),
 }
 LAYOUTS = ["blur", "fill", "bars"]
 CAPTION_WORDS = ["2", "3", "4"]
@@ -28,6 +29,8 @@ How you work:
 - Live watcher: records streams, reads chat, and when chat explodes (spike) it cuts a clip from
   `seconds_before` before the spike to `seconds_after` after it. `spike_x` = how big the explosion must be.
 - Scheduled: grabs top GTA clips on Twitch (min_views filter) 3x a day.
+- AI judge: an AI watches every live clip, scores it 1-10 for "did something big happen", throws out
+  clips below `min_ai_score`, and trims the clip around the real moment.
 - Layouts: "blur" (blurred background, full frame in middle), "fill" (zoomed/cropped to fill screen),
   "bars" (full frame with black bars). Captions show 2, 3 or 4 words at a time.
 - Streamers watched: {streamers}.
@@ -41,7 +44,7 @@ Reply ONLY with JSON:
   "reply": "short, casual answer to the owner (1-4 sentences). Say exactly what you're changing.",
   "new_rules": ["standing instructions to remember, written clearly; [] if none"],
   "remove_rules": ["exact text of saved rules the owner wants dropped; [] if none"],
-  "settings": {{"seconds_before": number, "seconds_after": number, "spike_x": number, "min_views": number}}
+  "settings": {{"seconds_before": number, "seconds_after": number, "spike_x": number, "min_views": number, "min_ai_score": number}}
               (only include ones that should change),
   "layouts": {{"blur": weight, "fill": weight, "bars": weight}} (0 = never use, 1 = normal, 3 = prefer; only if asked),
   "caption_words": {{"2": weight, "3": weight, "4": weight}} (only if asked),

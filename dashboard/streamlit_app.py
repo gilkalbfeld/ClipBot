@@ -134,6 +134,14 @@ def video_bytes(asset_id):
     return gh.asset_bytes(asset_id)
 
 
+@st.cache_data(ttl=None, show_spinner=False)
+def clip_info(asset_id):
+    try:
+        return json.loads(gh.asset_text(asset_id))
+    except ValueError:
+        return {}
+
+
 @st.cache_data(ttl=None)
 def post_text(asset_id):
     return gh.asset_text(asset_id)
@@ -273,10 +281,18 @@ def card(c, posted, show_badge=False):
                      else '<span class="badge b-ready">Ready</span>')
         name = nice(c["streamer"])
         src = '<span class="live">Live</span>' if c["source"] == "Live" else "Top clip"
+        info = clip_info(c["json_asset"]) if "json_asset" in c else {}
+        if info.get("ai_score") is not None:
+            sc = info["ai_score"]
+            col = "b-ok" if sc >= 7 else ("b-ready" if sc >= 5 else "b-bad")
+            badge += (f' <span class="badge {col}" title="{html.escape(info.get("ai_reason", ""))}">'
+                      f'🤖 {sc:g}/10</span>')
         st.markdown(
             f'<div class="meta"><span class="avatar">{html.escape(name[:1].upper())}</span>'
             f'{html.escape(name)} · {src} · {ago(c["made_at"])} {badge}</div>'
-            f'<div class="ctitle">{html.escape(title or c["id"])}</div>',
+            f'<div class="ctitle">{html.escape(title or c["id"])}</div>'
+            + (f'<div class="meta" style="margin-top:-.4rem">🤖 {html.escape(info["ai_reason"])}</div>'
+               if info.get("ai_reason") else ""),
             unsafe_allow_html=True)
         copy_buttons(title, desc, c["id"])
 
