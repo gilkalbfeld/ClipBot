@@ -239,9 +239,10 @@
   },
   "lacy_20261119_065637": {
     "rating": -1,
-    "comment": "",
+    "comment": "deleted",
+    "deleted": true,
     "streamer": "lacy",
     "source": "Live",
-    "at": "2026-11-19T17:32:10+00:00"
+    "at": "2026-11-19T17:32:18+00:00"
   }
 }
