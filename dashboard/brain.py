@@ -19,9 +19,12 @@ def pick_models(api_key, preferred):
     except Exception:
         return preferred
     good = [m for m in preferred if m in names]
-    flash = sorted([m for m in names if "flash" in m and "lite" not in m and "image" not in m
-                    and "tts" not in m and "live" not in m and "preview" not in m], reverse=True)
-    return (good + [m for m in flash if m not in good])[:4] or preferred
+    ok = [m for m in names if "flash" in m and not any(x in m for x in ("image", "tts", "live", "audio", "embed"))]
+    flash = sorted([m for m in ok if "lite" not in m and "preview" not in m], reverse=True)
+    lite = sorted([m for m in ok if "lite" in m and "preview" not in m], reverse=True)
+    # full models first, then lighter "lite" ones (less busy when Google is overloaded)
+    out = good + [m for m in flash if m not in good][:2] + lite[:2]
+    return out or preferred
 
 
 # Settings the chat is allowed to change, with safe limits
@@ -95,17 +98,21 @@ def ask(api_key, message, history, instructions, learned, feedback, streamers):
                              "thinkingConfig": {"thinkingBudget": 256}},   # think a little, answer fast
     }
     last_err = ""
-    for model in pick_models(api_key, MODELS):
+    import time
+    models = pick_models(api_key, MODELS)
+    for model in models + models[-2:]:   # one retry round on the lighter models
+        if last_err:
+            time.sleep(2)
         try:
             r = requests.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                headers={"x-goog-api-key": api_key}, json=body, timeout=100)
+                headers={"x-goog-api-key": api_key}, json=body, timeout=45)
             if r.status_code == 400 and "thinking" in r.text.lower():   # model doesn't support the setting
                 b2 = dict(body, generationConfig={k: v for k, v in body["generationConfig"].items()
                                                   if k != "thinkingConfig"})
                 r = requests.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                    headers={"x-goog-api-key": api_key}, json=b2, timeout=100)
+                    headers={"x-goog-api-key": api_key}, json=b2, timeout=45)
         except requests.RequestException as e:
             last_err += f"{model}: {str(e)[:80]} | "
             continue
@@ -113,6 +120,8 @@ def ask(api_key, message, history, instructions, learned, feedback, streamers):
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
             return json.loads(text)
         last_err += f"{model}: {r.status_code} {r.text[:150]} | "
+    if "503" in last_err or "high demand" in last_err or "timed out" in last_err.lower():
+        raise RuntimeError("Google's AI is overloaded right now (launch night!). Try again in a minute.")
     raise RuntimeError(last_err)
 
 

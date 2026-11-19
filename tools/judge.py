@@ -25,9 +25,12 @@ def pick_models(api_key, preferred):
     except Exception:
         return preferred
     good = [m for m in preferred if m in names]
-    flash = sorted([m for m in names if "flash" in m and "lite" not in m and "image" not in m
-                    and "tts" not in m and "live" not in m and "preview" not in m], reverse=True)
-    return (good + [m for m in flash if m not in good])[:4] or preferred
+    ok = [m for m in names if "flash" in m and not any(x in m for x in ("image", "tts", "live", "audio", "embed"))]
+    flash = sorted([m for m in ok if "lite" not in m and "preview" not in m], reverse=True)
+    lite = sorted([m for m in ok if "lite" in m and "preview" not in m], reverse=True)
+    # full models first, then lighter "lite" ones (less busy when Google is overloaded)
+    out = good + [m for m in flash if m not in good][:2] + lite[:2]
+    return out or preferred
 
 
 PROMPT = """You are judging a clip from a {platform} livestream by {streamer} playing GTA 6,
