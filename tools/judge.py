@@ -88,6 +88,7 @@ def judge(video, streamer, platform, spike_at):
                                    streamer_nick=nick(streamer))},
         ]}],
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2,
+                             "mediaResolution": "MEDIA_RESOLUTION_LOW",   # ~4x fewer tokens per frame (free tier)
                              "thinkingConfig": {"thinkingBudget": 512}},
     }
     for attempt in range(3):
@@ -101,6 +102,9 @@ def judge(video, streamer, platform, spike_at):
                 continue
             if r.status_code == 400 and "thinking" in r.text.lower():
                 body["generationConfig"].pop("thinkingConfig", None)
+                continue
+            if r.status_code == 400 and "media" in r.text.lower():
+                body["generationConfig"].pop("mediaResolution", None)
                 continue
             if r.status_code == 200:
                 try:

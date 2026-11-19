@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.judge import judge, LAST_ERROR  # noqa: E402
@@ -53,10 +54,13 @@ def main():
                 if not v:
                     fails += 1
                     print(f"{cid}: couldn't score — {LAST_ERROR['text']}")
-                    if fails >= 6:
+                    if "429" in LAST_ERROR["text"]:
+                        time.sleep(60)
+                    if fails >= 4:
                         sys.exit("Stopping: Gemini keeps failing (see reason above). Try again later.")
                     continue
                 fails = 0
+                time.sleep(12)   # stay under the free tier's per-minute limit
                 info.update({"ai_score": v["score"], "ai_reason": v.get("reason", ""),
                              "ai_problems": v.get("problems", []), "streamer": streamer,
                              "ai_summary": v.get("summary", ""), "ai_tags": v.get("tags", [])})
