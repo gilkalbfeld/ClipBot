@@ -91,13 +91,24 @@ def ask(api_key, message, history, instructions, learned, feedback, streamers):
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": contents,
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.4},
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.4,
+                             "thinkingConfig": {"thinkingBudget": 256}},   # think a little, answer fast
     }
     last_err = ""
     for model in pick_models(api_key, MODELS):
-        r = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-            headers={"x-goog-api-key": api_key}, json=body, timeout=60)
+        try:
+            r = requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                headers={"x-goog-api-key": api_key}, json=body, timeout=100)
+            if r.status_code == 400 and "thinking" in r.text.lower():   # model doesn't support the setting
+                b2 = dict(body, generationConfig={k: v for k, v in body["generationConfig"].items()
+                                                  if k != "thinkingConfig"})
+                r = requests.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                    headers={"x-goog-api-key": api_key}, json=b2, timeout=100)
+        except requests.RequestException as e:
+            last_err += f"{model}: {str(e)[:80]} | "
+            continue
         if r.status_code == 200:
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
             return json.loads(text)

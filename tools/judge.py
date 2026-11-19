@@ -67,7 +67,8 @@ def judge(video, streamer, platform, spike_at):
             {"inline_data": {"mime_type": "video/mp4", "data": b64}},
             {"text": PROMPT.format(platform=platform, streamer=streamer, spike_at=spike_at)},
         ]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2},
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2,
+                             "thinkingConfig": {"thinkingBudget": 512}},
     }
     for attempt in range(3):
         for model in pick_models(key, MODELS):
@@ -76,6 +77,9 @@ def judge(video, streamer, platform, spike_at):
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                     headers={"x-goog-api-key": key}, json=body, timeout=120)
             except requests.RequestException:
+                continue
+            if r.status_code == 400 and "thinking" in r.text.lower():
+                body["generationConfig"].pop("thinkingConfig", None)
                 continue
             if r.status_code == 200:
                 try:
