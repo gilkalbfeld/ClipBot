@@ -107,9 +107,10 @@
   },
   "kaicenat_20261119_075626": {
     "rating": -1,
-    "comment": "",
+    "comment": "deleted",
+    "deleted": true,
     "streamer": "kaicenat",
     "source": "Live",
-    "at": "2026-11-19T14:04:08+00:00"
+    "at": "2026-11-19T14:04:49+00:00"
   }
 }
