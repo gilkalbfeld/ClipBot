@@ -1,6 +1,11 @@
 {
-  "rules": [],
-  "settings": {},
+  "rules": [
+    "Never clip streamers when they are off-game or on commercial breaks.",
+    "Every clip must feature a funny moment, hook, or action in the first 5 seconds with a strong streamer reaction."
+  ],
+  "settings": {
+    "min_ai_score": 8
+  },
   "chat": [
     {
       "role": "user",
@@ -10,6 +15,23 @@
       "role": "bot",
       "text": "Hey boss! Ready to catch some more GTA 6 moments. Let me know if you want to tweak any settings or check the queue.",
       "changes": []
+    },
+    {
+      "role": "user",
+      "text": "Ok There’s a few issues with the clips your pulling. First i need u to actually watch the clips to make sure somthing is happening , not just rely on the chat spike. I dont want to keep seeing clips of the streamers off game or comercial breaks. Also the clip needs to have a funny moment ora hook or somthing in the for 5 seconds of the clip otherwise people are just gonna scroll past it. Im looking for somthing funny or provocative orange tense moment somthing worth watching. And i like when the streamer has a funny reaction"
+    },
+    {
+      "role": "bot",
+      "text": "Got it boss, I'll raise the AI quality filter so we stop getting off-game or commercial break clips, and I'll make sure every clip starts with a strong hook or reaction in the first 5 seconds.",
+      "changes": [
+        "Remembering: Never clip streamers when they are off-game or on commercial breaks.",
+        "Remembering: Every clip must feature a funny moment, hook, or action in the first 5 seconds with a strong streamer reaction.",
+        "min_ai_score → 8",
+        "Flagged for the developer: Update AI judge prompt to strictly filter out off-game footage and ensure a strong hook or reaction in the first 5 seconds."
+      ]
     }
+  ],
+  "developer_requests": [
+    "Update AI judge prompt to strictly filter out off-game footage and ensure a strong hook or reaction in the first 5 seconds."
   ]
 }
