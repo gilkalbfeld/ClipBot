@@ -9,6 +9,7 @@ import requests
 API = "https://api.github.com"
 RELEASES = {"live-clips": "Live", "clips": "Scheduled"}
 POSTED_FILE = "posted.json"
+FEEDBACK_FILE = "feedback.json"
 
 
 class GitHub:
@@ -77,13 +78,43 @@ class GitHub:
         url = self.asset_url(asset_id)
         return requests.get(url, timeout=30).content.decode("utf-8", "ignore") if url else ""
 
-    # ---------- posted list ----------
-    def posted(self):
+    # ---------- json files kept in the repo ----------
+    def read_json(self, path):
         try:
-            r = self.get(f"/contents/{POSTED_FILE}").json()
+            r = self.get(f"/contents/{path}").json()
             return json.loads(base64.b64decode(r["content"])), r["sha"]
         except requests.HTTPError:
             return {}, None
+
+    def write_json(self, path, data, sha, message):
+        body = {
+            "message": message,
+            "content": base64.b64encode(json.dumps(data, indent=2, ensure_ascii=False).encode()).decode(),
+        }
+        if sha:
+            body["sha"] = sha
+        r = self.s.put(f"{API}/repos/{self.repo}/contents/{path}", json=body, timeout=30)
+        r.raise_for_status()
+
+    def feedback(self):
+        return self.read_json(FEEDBACK_FILE)[0]
+
+    def set_feedback(self, clip, rating, comment):
+        """rating: 1 = thumbs up, -1 = thumbs down. Saved to feedback.json for the bot to learn from."""
+        data, sha = self.read_json(FEEDBACK_FILE)
+        data[clip["id"]] = {
+            "rating": rating,
+            "comment": comment.strip(),
+            "streamer": clip.get("streamer", ""),
+            "source": clip.get("source", ""),
+            "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+        self.write_json(FEEDBACK_FILE, data, sha,
+                        f"Feedback {'👍' if rating > 0 else '👎'}: {clip['id']}")
+
+    # ---------- posted list ----------
+    def posted(self):
+        return self.read_json(POSTED_FILE)
 
     def set_posted(self, clip_id, youtube_url="", undo=False):
         data, sha = self.posted()

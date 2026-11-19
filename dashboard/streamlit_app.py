@@ -42,9 +42,15 @@ def post_text(asset_id):
     return gh.asset_text(asset_id)
 
 
+@st.cache_data(ttl=30)
+def load_feedback():
+    return gh.feedback()
+
+
 def refresh():
     load_clips.clear()
     load_posted.clear()
+    load_feedback.clear()
 
 
 def nice(name):
@@ -72,6 +78,7 @@ def card(c, posted):
         st.code(title, language=None, wrap_lines=True)
         with st.expander("Description"):
             st.code(desc, language=None, wrap_lines=True)
+        feedback_box(c)
         a, b = st.columns(2)
         if url:
             a.link_button("⬇️ Download", url, use_container_width=True)
@@ -87,6 +94,28 @@ def card(c, posted):
                 gh.set_posted(c["id"])
                 refresh()
                 st.rerun()
+
+
+def feedback_box(c):
+    fb = load_feedback().get(c["id"], {})
+    current = fb.get("rating", 0)
+    with st.form(key="fb" + c["id"], border=False):
+        rating = st.radio(
+            "Rate this clip", [1, -1], horizontal=True,
+            index={1: 0, -1: 1}.get(current),
+            format_func=lambda r: "👍 Good" if r > 0 else "👎 Bad",
+            key="r" + c["id"],
+        )
+        comment = st.text_input("Comment", value=fb.get("comment", ""),
+                                placeholder="e.g. cut too early, not funny, great moment…",
+                                key="c" + c["id"])
+        if st.form_submit_button("Save feedback", use_container_width=True):
+            if rating is None:
+                st.warning("Pick 👍 or 👎 first.")
+            else:
+                gh.set_feedback(c, rating, comment)
+                load_feedback.clear()
+                st.toast("Feedback saved — ClipBot will learn from it.")
 
 
 def grid(clips, posted, per_page=12, key="g"):
