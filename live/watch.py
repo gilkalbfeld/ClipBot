@@ -252,6 +252,8 @@ class Watcher:
                 "id": clip_id, "src": raw, "name": self.name, "platform": self.platform,
                 "url": self.url, "stream_title": self.title, "strength": strength,
                 "time": stamp,
+                # wall-clock window, so the clip can be re-cut later from the saved stream
+                "window_utc": [spike_time - SECONDS_BEFORE, spike_time + SECONDS_AFTER],
             })
 
 
@@ -293,6 +295,7 @@ def renderer():
                 "source_url": job["url"],
                 "hype_strength": job["strength"],
                 "made_at_utc": job["time"],
+                "window_utc": job["window_utc"],
                 "captions": bool(has_caps),
                 "layout": layout,
                 "caption_words": words_per,

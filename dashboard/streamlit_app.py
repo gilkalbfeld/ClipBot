@@ -211,6 +211,24 @@ def post_dialog(c, title, desc):
         st.rerun()
 
 
+@st.dialog("✂️ Fix timing")
+def recut_dialog(c, title):
+    st.write(f"**{title or c['id']}**")
+    st.caption("ClipBot goes back to the saved stream and cuts this moment again. "
+               "Works for a few days after the stream (Twitch deletes old streams).")
+    start = st.slider("Start", -30, 30, 0, step=2,
+                      help="Negative = start earlier (more lead-up). Positive = start later.",
+                      format="%+d s")
+    end = st.slider("End", -20, 40, 0, step=2,
+                    help="Positive = keep going longer. Negative = end sooner.", format="%+d s")
+    st.caption(f"Start {abs(start)}s {'earlier' if start < 0 else 'later'} · "
+               f"end {abs(end)}s {'later' if end > 0 else 'sooner'}" if (start or end) else "Move a slider")
+    if st.button("✂️  Re-cut clip", type="primary", use_container_width=True, disabled=not (start or end)):
+        gh.start_workflow("recut.yml", {"clip_id": c["id"], "start_shift": str(start), "end_shift": str(end)})
+        st.session_state.setdefault("recutting", set()).add(c["id"])
+        st.rerun()
+
+
 @st.dialog("Delete this clip?")
 def delete_dialog(c, title):
     st.write(f"**{title or c['id']}**")
@@ -290,6 +308,10 @@ def card(c, posted, show_badge=False):
                 post_dialog(c, title, desc)
         if p2.button("🗑", key="del" + c["id"], use_container_width=True, help="Delete clip"):
             delete_dialog(c, title)
+        if c["id"] in st.session_state.get("recutting", set()):
+            st.caption("✂️ Re-cutting… new version shows up here in ~5 min (tap Refresh).")
+        elif st.button("✂️  Fix timing", key="fix" + c["id"], use_container_width=True):
+            recut_dialog(c, title)
 
 
 def grid(clips, posted, per_page=12, key="g", show_badge=False):

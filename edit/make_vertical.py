@@ -119,6 +119,11 @@ if __name__ == "__main__":
             "captions": has_caps,
             "layout": layout,
             "caption_words": words_per,
+            # where this clip sits in the full stream (lets the dashboard re-cut it)
+            "platform": "twitch",
+            "vod_id": clip.get("video_id") or "",
+            "vod_window": ([clip["vod_offset"], clip["vod_offset"] + clip["duration"]]
+                           if clip.get("vod_offset") is not None else None),
         }
         with open(os.path.join(OUT_DIR, f"{clip['id']}.json"), "w") as f:
             json.dump(info, f, indent=2)
