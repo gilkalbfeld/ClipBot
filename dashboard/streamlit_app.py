@@ -491,6 +491,28 @@ def search(clips, q):
 
 
 # ---------------- pages ----------------
+def ai_score(c):
+    return clip_info(c["json_asset"]).get("ai_score") if "json_asset" in c else None
+
+
+def sort_and_cleanup(out, posted, key):
+    """Sort by AI score + one-tap delete of everything the AI scored under 5."""
+    a, b, d = st.columns([3, 2, 2], vertical_alignment="center")
+    sort = a.radio("Sort", ["Newest", "🤖 Best first", "🤖 Worst first"], horizontal=True,
+                   label_visibility="collapsed", key=key + "sort")
+    if sort != "Newest":
+        scored = [c for c in out if ai_score(c) is not None]
+        rest = [c for c in out if ai_score(c) is None]
+        out = sorted(scored, key=ai_score, reverse=sort.startswith("🤖 Best")) + rest
+    low = [c for c in out if (ai_score(c) is not None and ai_score(c) < 5 and c["id"] not in posted)]
+    only_low = b.toggle(f"Only bad ones ({len(low)})", key=key + "low", help="AI score under 5")
+    if only_low:
+        out = sorted(low, key=ai_score)
+    if low and d.button(f"🗑 Delete {len(low)} bad clips", use_container_width=True, key=key + "bulk"):
+        bulk_delete_dialog(low)
+    return out
+
+
 def page_new():
     clips, posted, review = load_clips(), load_posted(), load_review()
     new = [c for c in clips if c["id"] not in review and c["id"] not in posted]
@@ -500,6 +522,7 @@ def page_new():
     tiles([("To review", len(new)), ("Made today", sum(c["made_at"][:10] == today for c in clips)),
            ("Approved", sum(1 for v in review.values() if v.get("status") == "approved"))])
     st.write("")
+    new = sort_and_cleanup(new, posted, "new")
     grid(new, posted, key="new", mode="new")
 
 
@@ -523,8 +546,6 @@ def page_library():
     streamers = sorted({c["streamer"] for c in clips if c["streamer"]})
     who = f2.selectbox("Streamer", ["All"] + streamers, format_func=lambda s: s if s == "All" else nice(s))
     status = f3.selectbox("Status", ["All", "New", "Approved", "Kept", "Posted"])
-    sort = st.radio("Sort", ["Newest", "🤖 Best AI score", "🤖 Worst AI score"], horizontal=True,
-                    label_visibility="collapsed")
     review = load_review()
 
     def status_of(c):
@@ -536,17 +557,8 @@ def page_library():
     if q:
         out = search(out, q)
 
-    def score(c):
-        return clip_info(c["json_asset"]).get("ai_score") if "json_asset" in c else None
-    if sort != "Newest":
-        scored = [c for c in out if score(c) is not None]
-        rest = [c for c in out if score(c) is None]
-        out = sorted(scored, key=score, reverse=sort.startswith("🤖 Best")) + rest
-    low = [c for c in out if (score(c) is not None and score(c) < 5 and c["id"] not in posted)]
-    a, b = st.columns([3, 1], vertical_alignment="center")
-    a.caption(f"{len(out)} clips · {len(low)} scored under 5 by the AI")
-    if low and b.button(f"🗑 Delete {len(low)} low-score clips", use_container_width=True):
-        bulk_delete_dialog(low)
+    st.caption(f"{len(out)} clips")
+    out = sort_and_cleanup(out, posted, "lib")
     grid(out, posted, key="lib", show_badge=True)
 
 
