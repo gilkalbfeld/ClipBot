@@ -124,6 +124,19 @@ def main():
             learned[k] = v
     for line in chat.get("instructions", [])[-5:]:
         notes.append("You told me: " + line)
+    # ---- real YouTube results: streamers whose videos get more views get priority
+    yts = load("youtube_stats.json", {})
+    bs = {k: v for k, v in yts.get("by_streamer", {}).items() if v.get("videos", 0) >= 3}
+    if bs:
+        overall = sum(v["avg_views"] for v in bs.values()) / len(bs) or 1
+        for name, v in bs.items():
+            mult = max(0.5, min(2.0, v["avg_views"] / overall))
+            learned["streamer_weight"][name] = round(learned["streamer_weight"].get(name, 1.0) * mult, 2)
+            if mult >= 1.4:
+                notes.append(f"{name}'s videos get {mult:.1f}x your average views on YouTube — prioritising them")
+            elif mult <= 0.7:
+                notes.append(f"{name}'s videos get fewer views on YouTube — lower priority")
+
     # ---- what you told ClipBot in the dashboard chat (instructions.json) wins over guesses
     ins = load("instructions.json", {})
     for k, v in ins.get("settings", {}).items():

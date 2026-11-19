@@ -14,13 +14,19 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import brain  # noqa: E402
+from tools import youtube as ytapi  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import brain  # noqa: E402
+from tools import youtube as ytapi  # noqa: E402
 import data  # noqa: E402
 
 importlib.reload(data)
 importlib.reload(brain)
-importlib.reload(brain)  # pick up changes to data.py on every update, no reboot needed
+importlib.reload(ytapi)
+importlib.reload(brain)
+importlib.reload(ytapi)  # pick up changes to data.py on every update, no reboot needed
 GitHub, split_post = data.GitHub, data.split_post
 
 st.set_page_config(page_title="ClipBot", page_icon="🌴", layout="wide")
@@ -668,12 +674,77 @@ def chat_box():
             st.rerun()
 
 
+YT_ID, YT_SECRET = st.secrets.get("YT_CLIENT_ID", ""), st.secrets.get("YT_CLIENT_SECRET", "")
+YT_REFRESH, YT_REDIRECT = st.secrets.get("YT_REFRESH_TOKEN", ""), st.secrets.get("YT_REDIRECT_URI", "")
+
+
+@st.cache_data(ttl=900, show_spinner="Loading YouTube stats…")
+def yt_snapshot():
+    return ytapi.snapshot(ytapi.YouTube(YT_ID, YT_SECRET, YT_REFRESH))
+
+
+def youtube_section():
+    """Connect YouTube, or show real channel stats."""
+    code = st.query_params.get("code")
+    if code and YT_ID:
+        try:
+            tok = ytapi.exchange_code(YT_ID, YT_SECRET, YT_REDIRECT, code)
+            st.success("YouTube connected! One last step: copy this and add it to BOTH Streamlit Secrets and "
+                       "GitHub Secrets as YT_REFRESH_TOKEN.")
+            st.code(f'YT_REFRESH_TOKEN = "{tok.get("refresh_token", "")}"', language=None)
+        except Exception as e:
+            st.error(f"Couldn't connect: {str(e)[:200]}")
+        st.query_params.clear()
+        return None
+    if not (YT_ID and YT_SECRET and YT_REDIRECT):
+        st.markdown('<div class="banner">Connect your YouTube channel to see real views, comments and your '
+                    'best videos here. (Needs YT_CLIENT_ID, YT_CLIENT_SECRET and YT_REDIRECT_URI in Secrets.)</div>',
+                    unsafe_allow_html=True)
+        return None
+    if not YT_REFRESH:
+        st.link_button("🔗 Connect YouTube", ytapi.auth_url(YT_ID, YT_REDIRECT), type="primary")
+        st.caption("If Google says the app isn't verified: tap Advanced → Go to ClipBot. It's your own app.")
+        return None
+    try:
+        snap = yt_snapshot()
+    except Exception as e:
+        st.error(f"Couldn't load YouTube stats: {str(e)[:200]}")
+        return None
+    ch, vids = snap["channel"], snap["videos"]
+    tiles([("Subscribers", f"{ch['subscribers']:,}"), ("Total views", f"{ch['views']:,}"),
+           ("Comments", f"{sum(v['comments'] for v in vids):,}"), ("Videos", ch["videos"])])
+    if vids:
+        best = max(vids, key=lambda v: v["views"])
+        st.write("")
+        with st.container(border=True):
+            st.markdown(f"**🏆 Best video:** [{html.escape(best['title'])}]({best['url']}) — "
+                        f"{best['views']:,} views · {best['likes']:,} likes · {best['comments']:,} comments")
+        if snap.get("daily"):
+            df = pd.DataFrame(snap["daily"])
+            with st.container(border=True):
+                st.subheader("Views per day")
+                st.bar_chart(df.set_index("day")["views"], color=PINK)
+        with st.container(border=True):
+            st.subheader("All videos")
+            df = pd.DataFrame([{"Title": v["title"], "Views": v["views"], "Likes": v["likes"],
+                                "Comments": v["comments"],
+                                "Avg % watched": round(v.get("averageViewPercentage", 0) or 0),
+                                "Subs gained": v.get("subscribersGained", 0), "Posted": v["published"][:10]}
+                               for v in sorted(vids, key=lambda v: -v["views"])])
+            st.dataframe(df, use_container_width=True, hide_index=True)
+    return snap
+
+
 def page_analytics():
     clips, posted, fb = load_clips(), load_posted(), load_feedback()
     st.title("Analytics")
-    st.markdown('<div class="banner">YouTube views, comments and your best video show up here once your '
-                'YouTube channel is connected. Below is what the bot has made so far.</div>',
-                unsafe_allow_html=True)
+    youtube_section()
+    report, _ = gh.read_json("reports/latest.json")
+    if report.get("text"):
+        with st.container(border=True):
+            st.subheader(f"📰 Daily report — {report.get('date', '')}")
+            st.markdown(report["text"])
+    st.subheader("ClipBot")
     ups = sum(1 for v in fb.values() if v.get("rating", 0) > 0)
     tiles([("Total clips", len(clips)), ("Posted", len(posted)),
            ("Live clips", sum(c["source"] == "Live" for c in clips)),
@@ -724,6 +795,8 @@ PAGES = {
 }
 if "page" not in st.session_state:
     st.session_state.page = "New Clips"
+if st.query_params.get("code"):   # coming back from the YouTube login
+    st.session_state.page = "Analytics"
 
 with st.sidebar:
     st.markdown('<div class="logo">🌴 <span>ClipBot</span></div>', unsafe_allow_html=True)
