@@ -3,6 +3,7 @@ import html
 import importlib
 import json
 import os
+import re
 import sys
 from collections import Counter
 from datetime import datetime, timezone
@@ -111,7 +112,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button {{ padding:.3
 # ---------------- cached data ----------------
 @st.cache_data(ttl=60, show_spinner="Loading clips…")
 def load_clips():
-    return gh.clips()
+    return gh.number_clips(gh.clips())
 
 
 @st.cache_data(ttl=30)
@@ -312,7 +313,8 @@ def card(c, posted, show_badge=False, mode="library"):
             badge += (f' <span class="badge {col}" title="{html.escape(info.get("ai_reason", ""))}">'
                       f'🤖 {sc:g}/10</span>')
         st.markdown(
-            f'<div class="meta"><span class="avatar">{html.escape(name[:1].upper())}</span>'
+            f'<div class="meta"><b style="color:#fff">#{c.get("num", "")}</b>'
+            f'<span class="avatar">{html.escape(name[:1].upper())}</span>'
             f'{html.escape(name)} · {src} · {ago(c["made_at"])} {badge}</div>'
             f'<div class="ctitle">{html.escape(title or c["id"])}</div>'
             + (f'<div class="meta" style="margin-top:-.4rem">🤖 {html.escape(info["ai_reason"])}</div>'
@@ -394,6 +396,9 @@ STOP = {"the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "with", "is
 
 def search(clips, q):
     """Finds clips by what happens in them (AI notes), title, streamer or date. Best matches first."""
+    m = re.fullmatch(r"\s*#?\s*(\d+)\s*", q)
+    if m:   # "#12" or "12" -> that clip
+        return [c for c in clips if c.get("num") == int(m.group(1))]
     words = [w for w in q.lower().replace(",", " ").split() if w not in STOP] or q.lower().split()
     scored = []
     for c in clips:
@@ -529,16 +534,45 @@ def chat_box():
             with st.expander(f"📌 What ClipBot remembers ({len(ins['rules'])})"):
                 for r in ins["rules"]:
                     st.write("• " + r)
-        msg = st.chat_input("Message ClipBot…")
+        msg = st.chat_input("Message ClipBot… (refer to clips by number, e.g. “#12 starts too late”)")
         if msg:
             learned, _ = gh.read_json("learned.json")
+            by_num = {c.get("num"): c for c in load_clips()}
+            mentioned = [int(n) for n in re.findall(r"(?:#|clip\s*#?\s*)(\d+)", msg, re.I)]
+            ctx = []
+            for n in mentioned:
+                c = by_num.get(n)
+                if c:
+                    info = clip_info(c["json_asset"]) if "json_asset" in c else {}
+                    t = split_post(post_text(c["post_asset"]))[0] if "post_asset" in c else ""
+                    ctx.append({"clip": n, "streamer": c["streamer"], "title": t,
+                                "what_happens": info.get("ai_summary") or info.get("ai_reason", ""),
+                                "ai_score": info.get("ai_score"), "my_feedback": load_feedback().get(c["id"])})
             with st.spinner("ClipBot is thinking…"):
                 try:
-                    result = brain.ask(key, msg, history, ins, learned, load_feedback(), STREAMERS)
+                    result = brain.ask(key, msg, history, ins, learned, load_feedback(), STREAMERS, ctx)
                 except Exception as e:
                     st.error(f"Couldn't reach Gemini: {str(e)[:300]}")
                     return
             changes = brain.apply(ins, result)
+            for act in result.get("clip_actions") or []:   # things to do to specific clips
+                c = by_num.get(act.get("clip"))
+                if not c:
+                    continue
+                n = act["clip"]
+                if act.get("rating") in (1, -1):
+                    gh.set_feedback(c, act["rating"], act.get("comment", ""))
+                    changes.append(f"#{n} rated {'👍' if act['rating'] > 0 else '👎'}")
+                rc = act.get("recut") or {}
+                ss, es = int(rc.get("start_shift") or 0), int(rc.get("end_shift") or 0)
+                if ss or es:
+                    gh.start_workflow("recut.yml", {"clip_id": c["id"], "start_shift": str(max(-30, min(30, ss))),
+                                                    "end_shift": str(max(-20, min(40, es)))})
+                    changes.append(f"#{n} re-cutting (start {ss:+d}s, end {es:+d}s) — ready in ~5 min")
+                if act.get("review") in ("approved", "library"):
+                    gh.set_review(c, act["review"])
+                    changes.append(f"#{n} → {'Ready to Post' if act['review'] == 'approved' else 'Library'}")
+            refresh()
             history += [{"role": "user", "text": msg},
                         {"role": "bot", "text": result.get("reply", ""), "changes": changes}]
             ins["chat"] = history[-40:]

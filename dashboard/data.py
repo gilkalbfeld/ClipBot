@@ -10,6 +10,7 @@ API = "https://api.github.com"
 RELEASES = {"live-clips": "Live", "clips": "Scheduled"}
 POSTED_FILE = "posted.json"
 REVIEW_FILE = "review.json"
+NUMBERS_FILE = "numbers.json"
 FEEDBACK_FILE = "feedback.json"
 
 
@@ -137,6 +138,25 @@ class GitHub:
         self.write_json(FEEDBACK_FILE, data, sha, f"Deleted clip: {clip['id']}")
         for aid in clip.get("assets", []):
             self.s.delete(f"{API}/repos/{self.repo}/releases/assets/{aid}", timeout=30)
+
+    # ---------- clip numbers (#1, #2…) that never change, so you can refer to clips by number ----------
+    def number_clips(self, clips):
+        nums, sha = self.read_json(NUMBERS_FILE)
+        nxt = max(nums.values(), default=0) + 1
+        changed = False
+        for c in sorted(clips, key=lambda c: c["made_at"]):
+            if c["id"] not in nums:
+                nums[c["id"]] = nxt
+                nxt += 1
+                changed = True
+        if changed:
+            try:
+                self.write_json(NUMBERS_FILE, nums, sha, "Number new clips")
+            except requests.HTTPError:
+                pass   # someone else wrote at the same time; numbers get saved next load
+        for c in clips:
+            c["num"] = nums.get(c["id"], 0)
+        return clips
 
     # ---------- review: approved (-> Ready to Post) or library (keep, don't post) ----------
     def review(self):

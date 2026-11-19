@@ -56,6 +56,7 @@ How you work:
 Current settings: {settings}
 Standing instructions already saved: {rules}
 Feedback so far: {feedback}
+Clips the owner mentioned by number: {clips}
 
 Reply ONLY with JSON:
 {{
@@ -67,13 +68,18 @@ Reply ONLY with JSON:
   "layouts": {{"blur": weight, "fill": weight, "bars": weight}} (0 = never use, 1 = normal, 3 = prefer; only if asked),
   "caption_words": {{"2": weight, "3": weight, "4": weight}} (only if asked),
   "streamers": {{"login": weight}} (0 = stop clipping them, 1 = normal, 3 = top priority; only if asked),
+  "clip_actions": [{{"clip": number, "rating": 1 or -1 or 0, "comment": "short note about this clip or empty",
+                    "recut": {{"start_shift": seconds (negative = start earlier), "end_shift": seconds (positive = longer)}} or null,
+                    "review": "approved" or "library" or null}}]
+                 (only for clips the owner talks about by number, e.g. "#12 starts too late" -> recut start_shift +5;
+                  "#7 cuts off the ending" -> end_shift +10; "#3 is fire, post it" -> rating 1, review approved),
   "needs_developer": "if the request needs new code (new features, caption font/size/colour,
                       title style, editing tricks), describe it in one sentence for the developer; else empty"
 }}
 Only change what the owner actually asked for. Never invent feedback."""
 
 
-def ask(api_key, message, history, instructions, learned, feedback, streamers):
+def ask(api_key, message, history, instructions, learned, feedback, streamers, clips_ctx=None):
     fb_summary = {
         "ratings": len(feedback),
         "thumbs_up": sum(1 for f in feedback.values() if f.get("rating", 0) > 0),
@@ -87,6 +93,7 @@ def ask(api_key, message, history, instructions, learned, feedback, streamers):
         settings=json.dumps(settings),
         rules=json.dumps(instructions.get("rules", [])),
         feedback=json.dumps(fb_summary),
+        clips=json.dumps(clips_ctx or []),
     )
     contents = [{"role": "user" if m["role"] == "user" else "model", "parts": [{"text": m["text"]}]}
                 for m in history[-12:]]
