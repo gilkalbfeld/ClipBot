@@ -59,7 +59,7 @@ def judge(video, streamer, platform, spike_at):
             try:
                 r = requests.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                    params={"key": key}, json=body, timeout=120)
+                    headers={"x-goog-api-key": key}, json=body, timeout=120)
             except requests.RequestException:
                 continue
             if r.status_code == 200:

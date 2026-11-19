@@ -82,7 +82,7 @@ def ask(api_key, message, history, instructions, learned, feedback, streamers):
     for model in MODELS:
         r = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-            params={"key": api_key}, json=body, timeout=60)
+            headers={"x-goog-api-key": api_key}, json=body, timeout=60)
         if r.status_code == 200:
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
             return json.loads(text)
