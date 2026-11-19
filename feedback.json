@@ -268,5 +268,13 @@
     "streamer": "lacy",
     "source": "Live",
     "at": "2026-11-19T17:34:46+00:00"
+  },
+  "caseoh__20261119_060311": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "caseoh_",
+    "source": "Live",
+    "at": "2026-11-19T17:35:51+00:00"
   }
 }
