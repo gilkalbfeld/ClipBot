@@ -59,7 +59,8 @@ def make_title(clip):
         if not re.search(r"[💀😭😂😳👀🔥]$", title):
             title += " " + random.choice(["💀", "😭", "😂", "🔥"])
 
-    title = title[0].upper() + title[1:]
+    if not any(title.startswith(n) for n in NICKNAMES.values()):
+        title = title[0].upper() + title[1:]
     if len(title) > MAX_TITLE:
         title = title[: MAX_TITLE - 3].rsplit(" ", 1)[0] + "..."
     return title

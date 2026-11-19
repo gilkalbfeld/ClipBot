@@ -46,7 +46,8 @@ KEEP_SECONDS = 240         # how much recent stream to keep on disk
 BUCKET = 5                 # chat is counted in 5-second buckets
 SPIKE_X = 2.5              # chat must be this many times busier than normal
 MIN_HYPE = 25              # ...and at least this much hype in 10 seconds
-COOLDOWN = 75              # seconds between clips from the same stream
+COOLDOWN = 90              # seconds between clips from the same stream
+RENDERERS = 2              # clips finished at the same time
 WARMUP = 60                # seconds of chat to learn what "normal" is
 
 # Words/emotes that mean something funny or crazy just happened
@@ -320,8 +321,9 @@ def start(name, platform, url, title):
 
 def main():
     os.makedirs(WORK_DIR, exist_ok=True)
-    rt = threading.Thread(target=renderer, daemon=True)
-    rt.start()
+    renderers = [threading.Thread(target=renderer, daemon=True) for _ in range(RENDERERS)]
+    for rt in renderers:
+        rt.start()
     log(f"Live watcher running for {RUN_MINUTES} minutes")
 
     while time.time() < stop_at:
@@ -354,8 +356,10 @@ def main():
     for w in active.values():
         w.alive = False
     time.sleep(SECONDS_AFTER + SEGMENT + 5)
-    render_queue.put(None)
-    rt.join(timeout=900)
+    for rt in renderers:
+        render_queue.put(None)
+    for rt in renderers:
+        rt.join(timeout=900)
 
 
 if __name__ == "__main__":
