@@ -220,5 +220,13 @@
     "streamer": "jynxzi",
     "source": "Live",
     "at": "2026-11-19T15:01:29+00:00"
+  },
+  "kaicenat_20261119_044506": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "kaicenat",
+    "source": "Live",
+    "at": "2026-11-19T17:18:19+00:00"
   }
 }
