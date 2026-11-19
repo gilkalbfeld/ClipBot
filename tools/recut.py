@@ -64,6 +64,20 @@ def twitch_vod_for(login, t):
     sys.exit(f"No saved stream (VOD) found for {login} at that time — it may be deleted or sub-only.")
 
 
+def twitch_clip_position(clip_id):
+    """For Twitch 'top clips': ask Twitch which stream (VOD) the clip came from and where."""
+    from fetch.twitch_clips import get_token, CLIENT_ID
+    h = {"Client-Id": CLIENT_ID, "Authorization": f"Bearer {get_token()}"}
+    data = requests.get("https://api.twitch.tv/helix/clips", headers=h, params={"id": clip_id}).json()["data"]
+    if not data:
+        sys.exit("Twitch can't find this clip anymore.")
+    c = data[0]
+    if not c.get("video_id") or c.get("vod_offset") is None:
+        sys.exit("The streamer's saved stream for this clip isn't available (deleted, sub-only or not saved), "
+                 "so it can't be re-cut.")
+    return c["video_id"], [c["vod_offset"], c["vod_offset"] + c["duration"]]
+
+
 def main():
     cid = os.environ["CLIP_ID"]
     shift_start = float(os.environ.get("START_SHIFT", "0"))
@@ -73,9 +87,14 @@ def main():
         tag, info = find_clip(cid, d)
 
         # 1) where is the clip in the full stream?
+        is_live = bool(re.search(r"_\d{8}_\d{6}$", cid))
         if info.get("vod_id") and info.get("vod_window"):
             vod_url = f"https://www.twitch.tv/videos/{info['vod_id']}"
             w0, w1 = info["vod_window"]
+        elif not is_live:   # a Twitch top clip
+            vid, (w0, w1) = twitch_clip_position(cid)
+            info["vod_id"] = vid
+            vod_url = f"https://www.twitch.tv/videos/{vid}"
         else:
             if info.get("window_utc"):
                 a, b = info["window_utc"]
