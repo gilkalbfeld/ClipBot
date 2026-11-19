@@ -228,5 +228,13 @@
     "streamer": "kaicenat",
     "source": "Live",
     "at": "2026-11-19T17:18:19+00:00"
+  },
+  "xqc_20261119_015238": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "xqc",
+    "source": "Live",
+    "at": "2026-11-19T17:20:18+00:00"
   }
 }
