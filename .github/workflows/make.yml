@@ -3,8 +3,10 @@ name: Make vertical clips
 on:
   workflow_dispatch:
   schedule:
-    # 11:17 AM, 5:17 PM, 11:17 PM New York time (times are UTC)
-    - cron: "17 16,22,4 * * *"
+    # 7:30 AM, 12:00 PM, 5:00 PM New York time (standard time; times are UTC)
+    # When clocks spring forward in March, change 12/17/22 to 11/16/21
+    - cron: "30 12 * * *"
+    - cron: "0 17,22 * * *"
 
 concurrency:
   group: make-clips
