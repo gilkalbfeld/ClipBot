@@ -45,9 +45,9 @@ SEGMENT = 4                # recording chunk size in seconds
 KEEP_SECONDS = 240         # how much recent stream to keep on disk
 
 BUCKET = 5                 # chat is counted in 5-second buckets
-SPIKE_X = 2.5              # chat must be this many times busier than normal
-MIN_HYPE = 25              # ...and at least this much hype in 10 seconds
-COOLDOWN = 90              # seconds between clips from the same stream
+SPIKE_X = LEARNED.get("spike_x", 2.5)              # chat must be this many times busier than normal
+MIN_HYPE = LEARNED.get("min_hype", 25)              # ...and at least this much hype in 10 seconds
+COOLDOWN = LEARNED.get("cooldown", 90)              # seconds between clips from the same stream
 RENDERERS = 2              # clips finished at the same time
 WARMUP = 60                # seconds of chat to learn what "normal" is
 

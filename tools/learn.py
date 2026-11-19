@@ -115,6 +115,15 @@ def main():
             notes.append(f"'{k}' layout gets the most 👍 — using it more")
     if issues["ads"]:
         notes.append(f"{issues['ads']} comment(s) about commercial breaks — ads are now skipped when recording Twitch")
+    # things you told ClipBot in the dashboard chat win over what it worked out itself
+    chat = load("chat_settings.json", {})
+    for k, v in chat.get("overrides", {}).items():
+        if isinstance(v, dict) and isinstance(learned.get(k), dict):
+            learned[k].update(v)
+        else:
+            learned[k] = v
+    for line in chat.get("instructions", [])[-5:]:
+        notes.append("You told me: " + line)
     if not notes:
         notes.append("Not enough feedback yet to change anything — keep rating clips.")
 
