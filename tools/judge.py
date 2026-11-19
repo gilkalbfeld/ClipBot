@@ -129,8 +129,10 @@ Stream title: {stream_title}
 Transcript (with seconds):
 {transcript}
 
+{want_line}
 Based on what the streamer says and reacts to, reply ONLY with JSON:
-{{"score": 1-10 (how funny/hype this moment probably is; 7+ great, 5 mid, 1-3 nothing happens / calm talking),
+{{"match": 0-10 (how well it fits what the owner is looking for; 10 if no request),
+  "score": 1-10 (how funny/hype this moment probably is; 7+ great, 5 mid, 1-3 nothing happens / calm talking),
   "reason": "max 12 words, what happens",
   "title": "YouTube Shorts title about what ACTUALLY happens in THIS clip — use a specific detail from the
             transcript (a quote, a character, a car, a place, the mistake, the target). Max 65 chars, include
@@ -145,7 +147,7 @@ Based on what the streamer says and reacts to, reply ONLY with JSON:
   "tags": ["5-8 short search tags"]}}"""
 
 
-def judge_text(transcript, streamer, platform="twitch", stream_title="", avoid=()):
+def judge_text(transcript, streamer, platform="twitch", stream_title="", avoid=(), want=""):
     """Cheaper judge: reads the transcript instead of watching the video (works when video quota is used up)."""
     key = os.environ.get("GEMINI_API_KEY")
     if not key or not transcript.strip():
@@ -153,7 +155,9 @@ def judge_text(transcript, streamer, platform="twitch", stream_title="", avoid=(
     body = {
         "contents": [{"parts": [{"text": TEXT_PROMPT.format(
             streamer_nick=nick(streamer), platform=platform, stream_title=stream_title or "?",
-            transcript=transcript[:6000], avoid=json.dumps(list(avoid)[-12:]))}]}],
+            transcript=transcript[:6000], avoid=json.dumps(list(avoid)[-12:]),
+            want_line=(f"The owner is specifically looking for: \"{want}\". Judge how well this clip matches."
+                       if want else ""))}]}],
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.9,
                              "thinkingConfig": {"thinkingBudget": 256}},
     }

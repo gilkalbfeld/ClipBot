@@ -1,0 +1,58 @@
+name: Find clips
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "What clips to find (or paste links)"
+        required: true
+      count:
+        description: "How many"
+        default: "5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: find-clips
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu
+      - run: pip install -r requirements.txt faster-whisper
+      - name: Learn from feedback
+        run: python tools/learn.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: python tools/find.py
+        env:
+          QUERY: ${{ inputs.query }}
+          COUNT: ${{ inputs.count }}
+          GH_TOKEN: ${{ github.token }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+      - name: Send clips to the dashboard
+        run: |
+          gh release view clips >/dev/null 2>&1 || gh release create clips --title "Clips" --notes "Scheduled clips"
+          ls output/*_vertical.mp4 >/dev/null 2>&1 || exit 0
+          gh release upload clips output/*_vertical.mp4 output/*_thumb.jpg output/*_post.txt output/*.json --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Save list of made clips
+        if: always()
+        run: |
+          git config user.name "clipbot"
+          git config user.email "clipbot@users.noreply.github.com"
+          git add made_clips.json || exit 0
+          git diff --cached --quiet && exit 0
+          git commit -m "Update made clips list"
+          git pull --rebase origin main
+          git push

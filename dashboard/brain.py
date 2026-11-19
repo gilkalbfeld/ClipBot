@@ -49,6 +49,7 @@ How you work:
 - Scheduled: grabs top GTA clips on Twitch (min_views filter) 3x a day.
 - AI judge: an AI watches every live clip, scores it 1-10 for "did something big happen", throws out
   clips below `min_ai_score`, and trims the clip around the real moment.
+- Find clips: you can search recent GTA streams for specific kinds of moments, or clip links the owner pastes.
 - Layouts: "blur" (blurred background, full frame in middle), "fill" (zoomed/cropped to fill screen),
   "bars" (full frame with black bars). Captions show 2, 3 or 4 words at a time.
 - Streamers watched: {streamers}.
@@ -73,6 +74,10 @@ Reply ONLY with JSON:
                     "review": "approved" or "library" or null}}]
                  (only for clips the owner talks about by number, e.g. "#12 starts too late" -> recut start_shift +5;
                   "#7 cuts off the ending" -> end_shift +10; "#3 is fire, post it" -> rating 1, review approved),
+  "find": {{"query": "what to search for, in the owner's words", "count": number}} or null
+          (when the owner asks you to go find/get/make clips of something specific, e.g.
+           "find 5 clips where the streamer goes crazy" -> {{"query": "streamer goes crazy because of something in the game", "count": 5}};
+           also if they paste links -> query = the links),
   "needs_developer": "if the request needs new code (new features, caption font/size/colour,
                       title style, editing tricks), describe it in one sentence for the developer; else empty"
 }}

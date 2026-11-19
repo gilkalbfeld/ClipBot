@@ -570,20 +570,33 @@ def page_library():
 
 def page_run():
     st.title("Make Clips")
-    a, b = st.columns(2, gap="medium")
-    with a.container(border=True):
-        st.subheader("Top GTA clips 💥")
-        st.write("Grabs the hottest new GTA clips on Twitch and makes up to 3 Shorts (~10 min).")
-        st.write("")
-        if st.button("Make clips now", type="primary", use_container_width=True, key="mk"):
+    with st.container(border=True):
+        st.subheader("🔎 Find clips")
+        st.caption("Describe what you want and ClipBot hunts for it across recent GTA streams — or paste links "
+                   "to clips/streams you saw online (Twitch VOD links with a timestamp work too).")
+        q = st.text_area("What should ClipBot find?", height=90, label_visibility="collapsed",
+                         placeholder="e.g. “streamers going crazy after something happens in the game”, "
+                                     "“Kai Cenat police chase”, “Lucia and Jason fishing”, or paste a link…")
+        c1, c2 = st.columns([1, 3], vertical_alignment="bottom")
+        n = c1.selectbox("How many", [1, 2, 3, 5, 8, 10], index=3)
+        if c2.button("🔎  Find clips", type="primary", use_container_width=True, disabled=not q.strip()):
+            gh.start_workflow("find.yml", {"query": q.strip()[:900], "count": str(n)})
+            load_runs.clear()
+            st.success("On it! New clips will show up in 🆕 New Clips in about 15–20 minutes.")
+        examples = ["Streamers going crazy after something happens in the game", "Funniest car crashes",
+                    "Police chases", "Streamer rage moments", "Lucia and Jason moments"]
+        st.caption("Ideas: " + " · ".join(examples))
+
+    with st.expander("⚙️ Automatic clipping (runs on its own)"):
+        st.write("ClipBot already makes clips by itself 3× a day (7:30 AM, 12 PM, 5 PM). "
+                 "You can also start these manually:")
+        a, b = st.columns(2, gap="medium")
+        if a.button("Grab top GTA clips now", use_container_width=True, key="mk"):
             gh.start_workflow("make.yml")
             load_runs.clear()
             st.success("Started! Clips show up in about 10 minutes.")
-    with b.container(border=True):
-        st.subheader("Live watcher 📡")
-        st.write("Watches your streamers live and clips every chat explosion.")
-        mins = st.slider("How long (minutes)", 15, 340, 330, step=15)
-        if st.button("Start watching", type="primary", use_container_width=True):
+        mins = b.slider("Watch streams live for (minutes)", 15, 340, 330, step=15)
+        if b.button("📡 Start live watcher", use_container_width=True):
             gh.start_workflow("live.yml", {"minutes": str(mins)})
             load_runs.clear()
             st.success(f"Watching for {mins} minutes. Clips appear as they happen.")
@@ -649,6 +662,11 @@ def chat_box():
                     st.error(f"Couldn't reach Gemini: {str(e)[:300]}")
                     return
             changes = brain.apply(ins, result)
+            f = result.get("find") or {}
+            if f.get("query"):
+                cnt = max(1, min(10, int(f.get("count") or 5)))
+                gh.start_workflow("find.yml", {"query": str(f["query"])[:900], "count": str(cnt)})
+                changes.append(f"🔎 Searching for {cnt} clip(s): {f['query']} — check New Clips in ~15–20 min")
             for act in result.get("clip_actions") or []:   # things to do to specific clips
                 c = by_num.get(act.get("clip"))
                 if not c:
@@ -814,10 +832,9 @@ with st.sidebar:
 # ---- top bar: search + make clips ----
 s1, s2 = st.columns([5, 1.2], vertical_alignment="center")
 top_q = s1.text_input("Search", placeholder="🔍  Search what happens… e.g. “Lucia fishing”, “police chase”, “Kai crash”", label_visibility="collapsed")
-if s2.button("Make clips now", type="primary", use_container_width=True, key="topmake"):
-    gh.start_workflow("make.yml")
-    load_runs.clear()
-    st.toast("Started! New clips in about 10 minutes.")
+if s2.button("🔎 Find clips", type="primary", use_container_width=True, key="topmake"):
+    st.session_state.page = "Make Clips"
+    st.rerun()
 
 if top_q:
     st.title(f"Results for “{top_q}”")
