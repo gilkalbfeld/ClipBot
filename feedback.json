@@ -40,5 +40,12 @@
     "streamer": "",
     "source": "Scheduled",
     "at": "2026-11-19T04:20:38+00:00"
+  },
+  "kaicenat_20261119_041256": {
+    "rating": -1,
+    "comment": "",
+    "streamer": "kaicenat",
+    "source": "Live",
+    "at": "2026-11-19T04:23:17+00:00"
   }
 }
