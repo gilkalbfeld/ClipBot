@@ -32,6 +32,15 @@ def find_clip(cid, d):
         if r.returncode == 0:
             with open(os.path.join(d, f"{cid}.json")) as f:
                 return tag, json.load(f)
+    # early clips have no info file — rebuild the basics from the clip's name
+    for tag in ["live-clips", "clips"]:
+        names = gh("release", "view", tag, "--json", "assets", "-q", ".assets[].name").split()
+        m = re.match(r"(.+)_\d{8}_\d{6}$", cid)
+        if f"{cid}_vertical.mp4" in names and m:
+            name = m.group(1)
+            return tag, {"streamer": name, "platform": "youtube" if name == "ishowspeed" else "twitch",
+                         "layout": "blur", "caption_words": 3,
+                         "source_url": f"https://www.twitch.tv/{name}"}
     sys.exit(f"Clip {cid} not found")
 
 
