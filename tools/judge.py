@@ -95,7 +95,7 @@ def judge(video, streamer, platform, spike_at):
                     return out
                 except (KeyError, IndexError, ValueError):
                     continue
-            LAST_ERROR["text"] = f"{model}: {r.status_code} {r.text[:200]}"
+            LAST_ERROR["text"] = f"{model}: {r.status_code} " + " ".join(r.text.split())[:300]
             if r.status_code == 429:      # free-tier rate limit: wait a bit
                 time.sleep(20)
                 break
