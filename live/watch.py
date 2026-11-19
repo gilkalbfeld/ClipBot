@@ -307,7 +307,7 @@ def renderer():
             # Title/description helpers expect a clip-like dict
             clip = {"broadcaster_name": job["name"], "title": "", "url": job["url"]}
             title = (verdict or {}).get("title") or make_title(clip)   # AI writes a title about what happens
-            desc = make_description(clip, title)
+            desc = make_description(clip, title, (verdict or {}).get("tags", []))
             info = {
                 "youtube_title": title,
                 "youtube_description": desc,

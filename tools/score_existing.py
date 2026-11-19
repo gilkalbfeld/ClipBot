@@ -86,7 +86,7 @@ def main():
                     url = info.get("source_url") or f"https://www.twitch.tv/{streamer}"
                     fake = {"broadcaster_name": streamer, "title": "", "url": url}
                     info["youtube_title"] = v["title"]
-                    info["youtube_description"] = make_description(fake, v["title"])
+                    info["youtube_description"] = make_description(fake, v["title"], v.get("tags", []))
                     info["youtube_tags"] = make_tags(fake) + v.get("tags", [])[:5]
                     pp = os.path.join(d, f"{cid}_post.txt")
                     with open(pp, "w", encoding="utf-8") as f:

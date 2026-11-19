@@ -26,7 +26,10 @@ HOOKS = [
     "Nobody expected this from {name} in GTA 6 😳",
 ]
 
-HASHTAGS = ["#gta6", "#gtavi", "#shorts", "#twitch"]
+# YouTube shows the first 3 hashtags above the title, and ignores ALL of them if there are more than 15.
+# So: 3 strong ones first, then streamer + what happens, ~8 total.
+HASHTAGS = ["#gta6", "#gtavi", "#shorts"]
+EXTRA_HASHTAGS = ["#gta6funnymoments", "#gaming"]
 MAX_TITLE = 90  # YouTube allows 100; keep a little room
 
 
@@ -66,16 +69,22 @@ def make_title(clip):
     return title
 
 
-def make_description(clip, title):
+def make_description(clip, title, content_tags=()):
     name = streamer_name(clip)
     login = clip["broadcaster_name"].lower()
+    site = "youtube.com/@" + login if "youtube" in clip.get("url", "") else f"twitch.tv/{login}"
     tags = HASHTAGS + ["#" + re.sub(r"\W", "", name.lower())]
+    for t in list(content_tags)[:3]:        # what happens, e.g. #policechase #lucia
+        h = "#" + re.sub(r"\W", "", t.lower())
+        if len(h) > 2 and h not in tags:
+            tags.append(h)
+    tags += [h for h in EXTRA_HASHTAGS if h not in tags]
     return (
         f"{title}\n\n"
-        f"🎮 Clip from twitch.tv/{login}\n"
+        f"🎮 Clip from {site} — go show them love!\n"
         f"Original: {clip['url']}\n\n"
-        f"Follow for daily GTA 6 clips 🌴\n\n"
-        + " ".join(tags)
+        f"Follow ViceClips for the best GTA 6 clips every day 🌴\n\n"
+        + " ".join(tags[:10])
     )
 
 
