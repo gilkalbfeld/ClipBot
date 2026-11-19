@@ -355,6 +355,26 @@ def card(c, posted, show_badge=False, mode="library"):
             + (f'<div class="meta" style="margin-top:-.4rem">🤖 {html.escape(info["ai_reason"])}</div>'
                if info.get("ai_reason") else ""),
             unsafe_allow_html=True)
+        if mode == "ready":   # approved clips: just get them posted
+            r1, r2, r3 = st.columns(3, gap="small")
+            if r1.button("🚀 Post", key="p" + c["id"], type="primary", use_container_width=True):
+                post_dialog(c, title, desc)
+            if r2.button("📚 Library", key="lib" + c["id"], use_container_width=True,
+                         help="Not posting this one — send it back to the Library"):
+                gh.set_review(c, "library")
+                refresh()
+                st.rerun()
+            if r3.button("✅ Posted", key="mp" + c["id"], use_container_width=True,
+                         help="Already uploaded it? Mark it posted"):
+                try:
+                    gh.set_posted(c["id"])
+                except Exception as e:
+                    st.error(f"Couldn't save: {str(e)[:200]}")
+                else:
+                    refresh()
+                    st.rerun()
+            return
+
         copy_buttons(title, desc, c["id"])
 
         # feedback: 👍 👎 + comment
