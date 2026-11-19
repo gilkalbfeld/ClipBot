@@ -199,6 +199,20 @@ class GitHub:
         r = self.s.put(f"{API}/repos/{self.repo}/contents/{POSTED_FILE}", json=body, timeout=30)
         r.raise_for_status()
 
+    # ---------- jobs (edits / searches) for the Editor page + notifications ----------
+    def start_job(self, kind, workflow, inputs, meta):
+        import random
+        job_id = f"{kind}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{random.randint(100, 999)}"
+        jobs, sha = self.read_json("jobs.json")
+        jobs[job_id] = dict(meta, kind=kind, status="running",
+                            started_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+        self.write_json("jobs.json", jobs, sha, f"Start {kind} job")
+        self.start_workflow(workflow, dict(inputs, job_id=job_id))
+        return job_id
+
+    def jobs(self):
+        return self.read_json("jobs.json")[0]
+
     # ---------- runs ----------
     def start_workflow(self, file, inputs=None):
         r = self.s.post(f"{API}/repos/{self.repo}/actions/workflows/{file}/dispatches",

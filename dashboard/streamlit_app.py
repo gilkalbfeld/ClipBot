@@ -173,13 +173,18 @@ def load_review():
     return gh.review()
 
 
+@st.cache_data(ttl=15)
+def load_jobs():
+    return gh.jobs()
+
+
 @st.cache_data(ttl=20)
 def load_runs():
     return gh.recent_runs(8)
 
 
 def refresh():
-    for f in (load_clips, load_posted, load_feedback, load_runs, load_review):
+    for f in (load_clips, load_posted, load_feedback, load_runs, load_review, load_jobs):
         f.clear()
 
 
@@ -292,8 +297,12 @@ def recut_dialog(c, title):
     st.caption(f"Start {abs(start)}s {'earlier' if start < 0 else 'later'} · "
                f"end {abs(end)}s {'later' if end > 0 else 'sooner'}" if (start or end) else "Move a slider")
     if st.button("✂️  Re-cut clip", type="primary", use_container_width=True, disabled=not (start or end)):
-        gh.start_workflow("recut.yml", {"clip_id": c["id"], "start_shift": str(start), "end_shift": str(end)})
-        st.session_state.setdefault("recutting", set()).add(c["id"])
+        gh.start_job("edit", "recut.yml",
+                     {"clip_id": c["id"], "start_shift": str(start), "end_shift": str(end)},
+                     {"clip_id": c["id"], "num": c.get("num"), "title": title,
+                      "label": f"Start {start:+d}s · end {end:+d}s"})
+        refresh()
+        st.session_state.page = "Editor"
         st.rerun()
 
 
@@ -433,8 +442,10 @@ def card(c, posted, show_badge=False, mode="library"):
                 post_dialog(c, title, desc)
             more = a3
         with more.popover("⋯", use_container_width=True):
-            if c["id"] in st.session_state.get("recutting", set()):
-                st.caption("✂️ Re-cutting… ready in ~5 min")
+            editing = any(j.get("clip_id") == c["id"] and j.get("status") == "running"
+                          for j in load_jobs().values())
+            if editing:
+                st.caption("✂️ Being edited — see the Editor page")
             elif st.button("✂️ Fix timing", key="fix" + c["id"], use_container_width=True):
                 recut_dialog(c, title)
             if not is_posted and mode != "new" and st.button("✅ Mark posted", key="mp" + c["id"],
@@ -519,6 +530,76 @@ def sort_and_cleanup(out, posted, key):
     return out
 
 
+def page_editor():
+    st.title("Editor")
+    st.caption("Clips you're re-cutting. Updates by itself every 15 seconds.")
+
+    @st.fragment(run_every=15)
+    def live_list():
+        load_jobs.clear()
+        jobs = sorted(((k, v) for k, v in load_jobs().items() if v.get("kind") == "edit"),
+                      key=lambda kv: kv[1].get("started_at", ""), reverse=True)
+        if not jobs:
+            st.info("No edits yet. Open a clip's ⋯ menu → ✂️ Fix timing.")
+            return
+        clips = {c["id"]: c for c in load_clips()}
+        for job_id, j in jobs[:20]:
+            with st.container(border=True):
+                status = j.get("status")
+                started = ago(j["started_at"]) if j.get("started_at") else ""
+                if status == "running":
+                    mins = int((datetime.now(timezone.utc) - datetime.fromisoformat(j["started_at"])).total_seconds() // 60)
+                    pill = ('<span class="badge b-run">⏳ Editing…</span>' if mins < 40
+                            else '<span class="badge b-bad">Taking too long?</span>')
+                elif status == "done":
+                    pill = '<span class="badge b-ok">✅ Done</span>'
+                else:
+                    pill = '<span class="badge b-bad">❌ Failed</span>'
+                st.markdown(f'<div class="cardhead"><span class="num">#{j.get("num", "?")}</span>{pill}</div>'
+                            f'<div class="ctitle">{html.escape(str(j.get("title", "")))}</div>'
+                            f'<div class="meta">{html.escape(j.get("label", ""))} · started {started}</div>',
+                            unsafe_allow_html=True)
+                if status == "running":
+                    st.progress(min(0.95, mins / 6), text="Re-cutting from the saved stream (~5 min)…")
+                elif status == "done":
+                    st.success(j.get("message", "Done"))
+                    c = clips.get(j.get("clip_id"))
+                    if c and "thumb_asset" in c:
+                        a, b = st.columns([1, 2])
+                        a.image(thumb_bytes(c["thumb_asset"]), use_container_width=True)
+                        if b.button("▶ Watch new version", key="ed" + job_id, use_container_width=True):
+                            st.session_state.playing = c["id"]
+                            st.session_state.page = "Library"
+                            st.rerun()
+                else:
+                    st.error(j.get("message", "Failed"))
+                    if j.get("run_url"):
+                        st.caption(f"[Details]({j['run_url']})")
+    live_list()
+
+
+def notifications():
+    """Recent events for the 🔔 menu: finished/failed jobs, bot errors, new clips."""
+    seen = st.session_state.get("seen_at") or gh.read_json("seen.json")[0].get("seen_at", "")
+    st.session_state.seen_at = seen
+    events = []
+    for k, j in load_jobs().items():
+        if j.get("status") in ("done", "failed") and j.get("finished_at"):
+            icon = "✅" if j["status"] == "done" else "❌"
+            what = (f"Edit of #{j.get('num', '?')}" if j.get("kind") == "edit"
+                    else f"Find: “{j.get('label', '')[:40]}”")
+            events.append((j["finished_at"], f"{icon} {what} — {j.get('message', '')}"))
+    for r in load_runs():
+        if r.get("conclusion") == "failure" and r["name"] not in ("Re-cut clip", "Find clips"):
+            events.append((r["updated_at"], f"⚠️ {r['name']} hit an error"))
+    new = [c for c in load_clips() if c["made_at"] > seen] if seen else []
+    if new:
+        events.append((max(c["made_at"] for c in new), f"🆕 {len(new)} new clip(s) arrived"))
+    events.sort(reverse=True)
+    unread = [e for e in events if e[0] > seen]
+    return events[:15], len(unread)
+
+
 def page_new():
     clips, posted, review = load_clips(), load_posted(), load_review()
     new = [c for c in clips if c["id"] not in review and c["id"] not in posted]
@@ -580,9 +661,10 @@ def page_run():
         c1, c2 = st.columns([1, 3], vertical_alignment="bottom")
         n = c1.selectbox("How many", [1, 2, 3, 5, 8, 10], index=3)
         if c2.button("🔎  Find clips", type="primary", use_container_width=True, disabled=not q.strip()):
-            gh.start_workflow("find.yml", {"query": q.strip()[:900], "count": str(n)})
-            load_runs.clear()
-            st.success("On it! New clips will show up in 🆕 New Clips in about 15–20 minutes.")
+            gh.start_job("find", "find.yml", {"query": q.strip()[:900], "count": str(n)},
+                         {"label": q.strip()[:120], "count": n})
+            refresh()
+            st.success("On it! You'll get a 🔔 notification when the clips are in New Clips (~15–20 min).")
         examples = ["Streamers going crazy after something happens in the game", "Funniest car crashes",
                     "Police chases", "Streamer rage moments", "Lucia and Jason moments"]
         st.caption("Ideas: " + " · ".join(examples))
@@ -665,7 +747,8 @@ def chat_box():
             f = result.get("find") or {}
             if f.get("query"):
                 cnt = max(1, min(10, int(f.get("count") or 5)))
-                gh.start_workflow("find.yml", {"query": str(f["query"])[:900], "count": str(cnt)})
+                gh.start_job("find", "find.yml", {"query": str(f["query"])[:900], "count": str(cnt)},
+                             {"label": str(f["query"])[:120], "count": cnt})
                 changes.append(f"🔎 Searching for {cnt} clip(s): {f['query']} — check New Clips in ~15–20 min")
             for act in result.get("clip_actions") or []:   # things to do to specific clips
                 c = by_num.get(act.get("clip"))
@@ -678,8 +761,11 @@ def chat_box():
                 rc = act.get("recut") or {}
                 ss, es = int(rc.get("start_shift") or 0), int(rc.get("end_shift") or 0)
                 if ss or es:
-                    gh.start_workflow("recut.yml", {"clip_id": c["id"], "start_shift": str(max(-30, min(30, ss))),
-                                                    "end_shift": str(max(-20, min(40, es)))})
+                    ss, es = max(-30, min(30, ss)), max(-20, min(40, es))
+                    gh.start_job("edit", "recut.yml",
+                                 {"clip_id": c["id"], "start_shift": str(ss), "end_shift": str(es)},
+                                 {"clip_id": c["id"], "num": n, "title": c["id"],
+                                  "label": f"Start {ss:+d}s · end {es:+d}s (from chat)"})
                     changes.append(f"#{n} re-cutting (start {ss:+d}s, end {es:+d}s) — ready in ~5 min")
                 if act.get("review") in ("approved", "library"):
                     gh.set_review(c, act["review"])
@@ -806,6 +892,7 @@ def page_money():
 PAGES = {
     "New Clips": ("🆕", page_new),
     "Ready to Post": ("🎬", page_ready),
+    "Editor": ("✂️", page_editor),
     "Library": ("📚", page_library),
     "Make Clips": ("⚡", page_run),
     "Analytics": ("📈", page_analytics),
@@ -830,11 +917,25 @@ with st.sidebar:
         st.rerun()
 
 # ---- top bar: search + make clips ----
-s1, s2 = st.columns([5, 1.2], vertical_alignment="center")
+s1, s2, s3 = st.columns([5, 1.3, 0.8], vertical_alignment="center")
 top_q = s1.text_input("Search", placeholder="🔍  Search what happens… e.g. “Lucia fishing”, “police chase”, “Kai crash”", label_visibility="collapsed")
 if s2.button("🔎 Find clips", type="primary", use_container_width=True, key="topmake"):
     st.session_state.page = "Make Clips"
     st.rerun()
+events, unread = notifications()
+with s3.popover(f"🔔 {unread}" if unread else "🔔", use_container_width=True):
+    st.markdown("**Notifications**")
+    if not events:
+        st.caption("Nothing yet.")
+    for t, text in events:
+        st.markdown(f"{'🔴 ' if t > st.session_state.seen_at else ''}{text}  \n"
+                    f"<span style='color:#8d86a0;font-size:.75rem'>{ago(t)}</span>", unsafe_allow_html=True)
+    if unread and st.button("Mark all read", use_container_width=True):
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        _, sha = gh.read_json("seen.json")
+        gh.write_json("seen.json", {"seen_at": now}, sha, "Notifications read")
+        st.session_state.seen_at = now
+        st.rerun()
 
 if top_q:
     st.title(f"Results for “{top_q}”")

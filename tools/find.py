@@ -28,6 +28,7 @@ QUERY = os.environ.get("QUERY", "").strip()
 COUNT = max(1, min(10, int(os.environ.get("COUNT", "5") or 5)))
 OUT = "output"
 KEY = os.environ.get("GEMINI_API_KEY", "")
+MADE = []
 
 
 def gemini(prompt):
@@ -78,6 +79,7 @@ def render(src, streamer, url, verdict, source_type, model, extra=None):
                     "-vf", "crop=iw:iw*3/4:0:(ih-iw*3/4)/2,scale=640:-2", "-q:v", "4",
                     os.path.join(OUT, cid + "_thumb.jpg")])
     print(f"✅ {title}")
+    MADE.append(cid)
     return cid
 
 
@@ -163,6 +165,11 @@ def main():
     urls = re.findall(r"https?://\S+", QUERY)
     made = from_links(urls, model) if urls else search(model)
     print(f"Made {made} clip(s) for: {QUERY}")
+    with open("job_clips.json", "w") as f:
+        json.dump(MADE, f)
+    with open("job_message.txt", "w") as f:
+        f.write(f"Found {made} clip(s) — they're in New Clips" if made else
+                "Couldn't find clips matching that — try describing it differently or paste a link")
 
 
 if __name__ == "__main__":

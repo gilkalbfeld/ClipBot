@@ -3,6 +3,9 @@ name: Find clips
 on:
   workflow_dispatch:
     inputs:
+      job_id:
+        description: "Dashboard job id"
+        default: ""
       query:
         description: "What clips to find (or paste links)"
         required: true
@@ -56,3 +59,19 @@ jobs:
           git commit -m "Update made clips list"
           git pull --rebase origin main
           git push
+      - name: Report result to the dashboard
+        if: always()
+        run: |
+          git config user.name "clipbot"
+          git config user.email "clipbot@users.noreply.github.com"
+          for i in 1 2 3; do
+            git pull -q --rebase origin main || true
+            JOB_STATUS="${{ job.status }}" python tools/job_status.py
+            git add jobs.json 2>/dev/null || exit 0
+            git diff --cached --quiet && exit 0
+            git commit -qm "Job ${{ inputs.job_id }} finished" && git push -q && exit 0
+            git reset -q --hard origin/main
+          done
+        env:
+          JOB_ID: ${{ inputs.job_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

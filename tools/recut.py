@@ -148,7 +148,21 @@ def main():
         # 4) replace the old files
         gh("release", "upload", tag, out, thumb, jpath, "--clobber")
         print(f"✅ {cid} re-cut ({n1 - n0:.0f}s long)")
+        say(f"Re-cut done — new version is {n1 - n0:.0f}s long")
+
+
+def say(msg):
+    with open("job_message.txt", "w") as f:
+        f.write(msg)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            say(str(e.code))
+            raise
+    except Exception as e:
+        say(f"Re-cut failed: {str(e)[:200]}")
+        raise
