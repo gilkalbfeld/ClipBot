@@ -649,6 +649,22 @@ def page_library():
     grid(out, posted, key="lib", show_badge=True)
 
 
+REEL_SHORTCUT_HELP = """Set this up once in the **Shortcuts** app:
+1. Tap **＋** → name it **ClipBot**.
+2. Tap the **ⓘ** (details) → turn on **Show in Share Sheet** → set it to accept **URLs**.
+3. Add action **URL Encode** (it uses *Shortcut Input*).
+4. Add action **Open URLs** with: `https://appapppy-ajr2ujs2kszt3qtmcw5xtu.streamlit.app/?reel=` then insert the *URL Encoded Text* right after `=`.
+5. Done. Now on any reel: **Share → ClipBot**. Your dashboard opens and starts finding it.
+
+If a friend sends you a reel, open it and share it to ClipBot the same way."""
+
+
+def start_reel_job(url, count):
+    gh.start_job("find", "find.yml", {"query": url, "count": str(count)},
+                 {"label": "Reel: " + url[:80], "count": count})
+    refresh()
+
+
 def page_run():
     st.title("Make Clips")
     with st.container(border=True):
@@ -668,6 +684,21 @@ def page_run():
         examples = ["Streamers going crazy after something happens in the game", "Funniest car crashes",
                     "Police chases", "Streamer rage moments", "Lucia and Jason moments"]
         st.caption("Ideas: " + " · ".join(examples))
+
+    with st.container(border=True):
+        st.subheader("📲 From a reel")
+        st.caption("Got sent a funny reel or TikTok? Paste it. ClipBot figures out the streamer and the moment, "
+                   "finds the ORIGINAL on Twitch and makes its own Short (it never reposts the reel).")
+        reel = st.text_input("Reel link", placeholder="https://www.tiktok.com/…  or Instagram / YouTube Shorts link",
+                             label_visibility="collapsed")
+        r1, r2 = st.columns([1, 3], vertical_alignment="bottom")
+        extra = r1.selectbox("Plus similar", [0, 1, 2, 3, 5], index=2, help="Also make this many clips like it")
+        if r2.button("📲  Find this clip", type="primary", use_container_width=True,
+                     disabled=not reel.strip().startswith("http")):
+            start_reel_job(reel.strip(), 1 + extra)
+            st.success("On it! You'll get a 🔔 notification when it's done (~15–25 min).")
+        with st.expander("📱 Share reels straight from your phone (1-tap)"):
+            st.markdown(REEL_SHORTCUT_HELP)
 
     with st.expander("⚙️ Automatic clipping (runs on its own)"):
         st.write("ClipBot already makes clips by itself 3× a day (7:30 AM, 12 PM, 5 PM). "
@@ -902,6 +933,13 @@ if "page" not in st.session_state:
     st.session_state.page = "New Clips"
 if st.query_params.get("code"):   # coming back from the YouTube login
     st.session_state.page = "Analytics"
+_reel = st.query_params.get("reel")
+if _reel and st.session_state.get("reel_done") != _reel:   # shared from the iPhone Shortcut
+    st.session_state.reel_done = _reel
+    start_reel_job(_reel, 3)
+    st.query_params.clear()
+    st.toast("📲 Got the reel! Finding the original… you'll get a 🔔 when it's done.")
+    st.session_state.page = "Make Clips"
 
 with st.sidebar:
     st.markdown('<div class="logo">🌴 <span>ClipBot</span></div>', unsafe_allow_html=True)
