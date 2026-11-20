@@ -587,6 +587,7 @@ def notifications():
         if j.get("status") in ("done", "failed") and j.get("finished_at"):
             icon = "✅" if j["status"] == "done" else "❌"
             what = (f"Edit of #{j.get('num', '?')}" if j.get("kind") == "edit"
+                    else f"📲 {j.get('label', '')[:50]}" if j.get("from_inbox")
                     else f"Find: “{j.get('label', '')[:40]}”")
             events.append((j["finished_at"], f"{icon} {what} — {j.get('message', '')}"))
     for r in load_runs():
