@@ -90,12 +90,24 @@ Reply ONLY with JSON: {{"indexes": [up to 8 best guesses, best first]}}""") or {
         best = None
         from edit.download import download
         for c in [cands[i] for i in idx][:8]:
-            src = download(c)
-            if not src:
+            src = None
+            try:
+                src = download(c)
+            except Exception as e:
+                print("  download error:", str(e)[:120])
+            if not src:   # fallback downloader
+                src = os.path.join(OUT, f"cand_{c['id']}.mp4")
+                subprocess.run(["yt-dlp", "-q", "-f", "best", "-o", src, c["url"]])
+                if not os.path.exists(src):
+                    print("  couldn't download", c["url"])
+                    continue
+            try:
+                t = transcribe(src, model)
+            except Exception as e:
+                print("  transcribe error:", str(e)[:120])
                 continue
-            t = transcribe(src, model)
             sim = similarity(said, t)
-            print(f"  {sim:.2f} — {c['title'][:60]}")
+            print(f"  match {sim:.2f} — {c['title'][:60]}", flush=True)
             if sim > (best[0] if best else 0):
                 best = (sim, c, src, t)
         if best and best[0] >= 0.45:
