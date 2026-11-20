@@ -190,6 +190,8 @@ def main():
             made += find_from_reel(u, model, COUNT)
     if not urls:
         made = search(model)
+    import tools.find as tf   # the reel finder records its clips in the imported copy of this module
+    MADE.extend(x for x in tf.MADE if x not in MADE)
     print(f"Made {made} clip(s) for: {QUERY}")
     with open("job_clips.json", "w") as f:
         json.dump(MADE, f)

@@ -84,6 +84,9 @@ Clips (index|views|date|title):
 {listing}
 Reply ONLY with JSON: {{"indexes": [up to 8 best guesses, best first]}}""") or {}
         idx = [i for i in pick.get("indexes", []) if isinstance(i, int) and 0 <= i < len(cands)]
+        if not idx:   # AI couldn't tell from titles: just check the most-viewed ones
+            idx = list(range(min(8, len(cands))))
+        print(f"{len(cands)} recent {streamer} clips, checking {len(idx[:8])}")
         best = None
         from edit.download import download
         for c in [cands[i] for i in idx][:8]:
