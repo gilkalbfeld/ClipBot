@@ -12,6 +12,7 @@ import requests
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",   # post Shorts for you
     "https://www.googleapis.com/auth/yt-analytics.readonly",
     "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",   # revenue, once monetized
 ]
