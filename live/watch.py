@@ -50,6 +50,7 @@ MIN_HYPE = LEARNED.get("min_hype", 25)              # ...and at least this much 
 MIN_AI_SCORE = LEARNED.get("min_ai_score", 6)       # AI judge: clips scoring below this are thrown out
 AI_TRIM = True                                      # let the AI tighten the clip around the real moment
 MAX_LEN = LEARNED.get("max_len", 35)                # Shorts this long or shorter keep people watching
+BANGER = 9                                          # clips this good get posted right away
 COOLDOWN = LEARNED.get("cooldown", 90)              # seconds between clips from the same stream
 RENDERERS = 2              # clips finished at the same time
 WARMUP = 60                # seconds of chat to learn what "normal" is
@@ -357,6 +358,9 @@ def renderer():
                 subprocess.run(["gh", "release", "upload", RELEASE_TAG, out, thumb,
                                 os.path.join(OUT_DIR, job["id"] + "_post.txt"),
                                 os.path.join(OUT_DIR, job["id"] + ".json"), "--clobber"])
+                if verdict and verdict.get("score", 0) >= BANGER:   # don't wait for the next slot
+                    log(f"🔥 banger ({verdict['score']}/10) — posting it now")
+                    subprocess.run(["gh", "workflow", "run", "autopost.yml"])
         except Exception as e:
             log("render failed:", job["id"], str(e)[:200])
         finally:

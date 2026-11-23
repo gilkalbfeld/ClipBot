@@ -19,6 +19,8 @@ from tools import youtube as ytapi  # noqa: E402
 from tools.judge import transcribe  # noqa: E402
 from tools.safety import check  # noqa: E402
 
+BANGER = 9             # posts even if the daily limit is reached...
+HARD_CAP = 10          # ...but never more than this many posts in 24h
 MIN_SCORE = 8          # "bangers only" for clips you didn't approve
 FALLBACK_SCORE = 7     # used only if there are no 8+ clips left
 
@@ -61,8 +63,9 @@ def main():
     # count ALL posts in the last 24h (yours + ClipBot's) so the channel isn't flooded
     since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
     done_today = [v for v in posted.values() if v.get("posted_at", "") > since]
-    if len(done_today) >= settings.get("per_day", 6):
-        print("Daily limit reached")
+    over_limit = len(done_today) >= settings.get("per_day", 6)
+    if len(done_today) >= HARD_CAP:
+        print("Hard cap reached")
         return
     last_streamer = max(posted.values(), key=lambda v: v.get("posted_at", ""), default={}).get("streamer", "")
 
@@ -80,6 +83,9 @@ def main():
     cands.sort(key=lambda x: x[0], reverse=True)
     if any(r[0] or r[2] >= MIN_SCORE for r, _ in cands):   # prefer approved / 8+; 7s only if nothing better
         cands = [(r, c) for r, c in cands if r[0] or r[2] >= MIN_SCORE]
+    if over_limit:   # daily limit hit: only true bangers get through
+        cands = [(r, c) for r, c in cands if (c["info"].get("ai_score") or 0) >= BANGER]
+        print(f"Daily limit reached — {len(cands)} banger(s) (9+) can still go out")
     print(f"{len(cands)} clips ready to auto-post")
 
     yt = ytapi.YouTube(os.environ["YT_CLIENT_ID"], os.environ["YT_CLIENT_SECRET"], os.environ["YT_REFRESH_TOKEN"])

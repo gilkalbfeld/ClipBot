@@ -1,6 +1,9 @@
 name: Live watcher
 
 on:
+  schedule:
+    # always watching: a new ~5h45m shift starts every 6 hours (runs queue, never overlap)
+    - cron: "3 */6 * * *"
   workflow_dispatch:
     inputs:
       minutes:
@@ -9,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: live-watcher
@@ -16,7 +20,7 @@ concurrency:
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 355
+    timeout-minutes: 358
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,7 +38,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - run: python live/watch.py
         env:
-          RUN_MINUTES: ${{ inputs.minutes || '330' }}
+          RUN_MINUTES: ${{ inputs.minutes || '345' }}
           RELEASE_TAG: live-clips
           GH_TOKEN: ${{ github.token }}
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
