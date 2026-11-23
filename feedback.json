@@ -458,5 +458,13 @@
     "streamer": "lacy",
     "source": "Live",
     "at": "2026-11-23T06:13:10+00:00"
+  },
+  "xqc_20261119_053626": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "xqc",
+    "source": "Live",
+    "at": "2026-11-23T06:13:13+00:00"
   }
 }
