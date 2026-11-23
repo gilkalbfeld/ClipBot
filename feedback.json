@@ -330,5 +330,13 @@
     "streamer": "",
     "source": "Scheduled",
     "at": "2026-11-23T06:06:58+00:00"
+  },
+  "ishowspeed_20261123_060117": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "ishowspeed",
+    "source": "Scheduled",
+    "at": "2026-11-23T06:07:56+00:00"
   }
 }
