@@ -362,5 +362,13 @@
     "streamer": "kaicenat",
     "source": "Scheduled",
     "at": "2026-11-23T06:12:24+00:00"
+  },
+  "caseoh__20261119_042517": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "caseoh_",
+    "source": "Live",
+    "at": "2026-11-23T06:12:28+00:00"
   }
 }
