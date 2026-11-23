@@ -19,7 +19,8 @@ from tools import youtube as ytapi  # noqa: E402
 from tools.judge import transcribe  # noqa: E402
 from tools.safety import check  # noqa: E402
 
-MIN_SCORE = 7
+MIN_SCORE = 8          # "bangers only" for clips you didn't approve
+FALLBACK_SCORE = 7     # used only if there are no 8+ clips left
 
 
 def load(path, default):
@@ -70,11 +71,13 @@ def main():
         if cid in posted or status == "library" or fb.get(cid, {}).get("rating", 0) < 0:
             continue
         score = info.get("ai_score") or 0
-        if status != "approved" and score < MIN_SCORE:
+        if status != "approved" and score < FALLBACK_SCORE:
             continue
         rank = (status == "approved", (info.get("streamer") or "") != last_streamer, score, cid)
         cands.append((rank, c))
     cands.sort(key=lambda x: x[0], reverse=True)
+    if any(r[0] or r[2] >= MIN_SCORE for r, _ in cands):   # prefer approved / 8+; 7s only if nothing better
+        cands = [(r, c) for r, c in cands if r[0] or r[2] >= MIN_SCORE]
     print(f"{len(cands)} clips ready to auto-post")
 
     yt = ytapi.YouTube(os.environ["YT_CLIENT_ID"], os.environ["YT_CLIENT_SECRET"], os.environ["YT_REFRESH_TOKEN"])
