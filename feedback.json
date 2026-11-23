@@ -346,5 +346,13 @@
     "streamer": "ishowspeed",
     "source": "Scheduled",
     "at": "2026-11-23T06:08:21+00:00"
+  },
+  "PrettyZanyClamANELE-2-oU00I2wzBdbVEA": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "",
+    "source": "Scheduled",
+    "at": "2026-11-23T06:11:07+00:00"
   }
 }
