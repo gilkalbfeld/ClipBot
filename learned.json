@@ -1,11 +1,11 @@
 {
-  "updated": "2026-11-22T22:15:07+00:00",
-  "ratings": 38,
+  "updated": "2026-11-23T05:36:00+00:00",
+  "ratings": 41,
   "streamer_weight": {
     "lacy": 0.3,
     "jynxzi": 1.33,
     "xqc": 0.33,
-    "kaicenat": 0.3,
+    "kaicenat": 0.36,
     "caseoh_": 0.6,
     "ishowspeed": 2.0
   },
@@ -16,13 +16,13 @@
   },
   "layout_weight": {
     "fill": 0.33,
-    "blur": 1.5,
+    "blur": 2.0,
     "bars": 3.0
   },
   "words_weight": {
     "2": 3.0,
     "4": 0.67,
-    "3": 2.0
+    "3": 3.0
   },
   "seconds_before": 40,
   "seconds_after": 12,
