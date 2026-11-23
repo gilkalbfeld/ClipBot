@@ -59,7 +59,8 @@ def render(src, streamer, url, verdict, source_type, model, extra=None):
     out = os.path.join(OUT, cid + "_vertical.mp4")
     make_vertical(src, srt, out, caps, layout)
     clip = {"broadcaster_name": streamer, "title": "", "url": url}
-    title = (verdict or {}).get("title") or make_title(clip)
+    from tools.safety import safe_title
+    title = safe_title((verdict or {}).get("title") or make_title(clip))
     desc = make_description(clip, title, (verdict or {}).get("tags", []))
     info = {
         "youtube_title": title, "youtube_description": desc, "youtube_tags": make_tags(clip),

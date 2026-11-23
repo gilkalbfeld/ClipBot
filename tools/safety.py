@@ -1,0 +1,76 @@
+"""
+YouTube safety check before ClipBot posts anything on its own.
+Goal: edgy and funny is fine — anything that could get ViceClips a strike, age-restricted or demonetized is not.
+"""
+import re
+
+from tools.judge import MODELS, pick_models
+import json
+import os
+import requests
+
+# Never in a title/description (YouTube scans text too)
+BANNED_WORDS = [
+    "fuck", "shit", "bitch", "pussy", "dick", "cock", "cum", "nigg", "fag", "retard", "whore", "slut",
+    "porn", "nude", "naked", "sex", "rape", "kill yourself", "kys",
+]
+
+RULES = """YouTube Community Guidelines + advertiser-friendly rules for a GTA 6 Shorts channel:
+NOT OK (reject): nudity or sexual content/acts (incl. in-game strip clubs with visible nudity, sexual dialogue as the
+focus), slurs or hate speech said by anyone (n-word, f-slur, etc.), harassment of a real person, real-life violence
+or injuries, self-harm talk, minors in risky situations, dangerous real-world acts, doxxing / personal info,
+drugs being used for real, scams, misleading clickbait.
+CAUTION (allowed only if brief and not the focus): heavy swearing, in-game sexual jokes, in-game drug content.
+OK: normal GTA violence, crashes, police chases, rage/screaming, banter, mild swearing, funny NPC moments."""
+
+
+def text_is_clean(text):
+    t = text.lower()
+    return not any(w in t for w in BANNED_WORDS)
+
+
+def safe_title(title):
+    """Masks any banned word that slipped into a title."""
+    out = title
+    for w in BANNED_WORDS:
+        out = re.sub(re.escape(w), lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), out, flags=re.I)
+    return out
+
+
+def check(transcript, title, summary="", key=None):
+    """Returns {"safe": bool, "reason": str, "title": safer title}."""
+    key = key or os.environ.get("GEMINI_API_KEY", "")
+    result = {"safe": True, "reason": "", "title": safe_title(title)}
+    if not key:
+        return result
+    prompt = f"""{RULES}
+
+Clip title: {title}
+What happens: {summary}
+Transcript (what's said):
+{transcript[:5000]}
+
+Would posting this to YouTube risk a strike, age-restriction or demonetization?
+Reply ONLY with JSON: {{"safe": true/false, "reason": "short reason if unsafe",
+ "title": "the title, rewritten ONLY if it has swear words or could be misleading (keep the vibe), else the same"}}"""
+    body = {"contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.1}}
+    for model in sorted(pick_models(key, MODELS), key=lambda m: "lite" not in m):
+        try:
+            r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                              headers={"x-goog-api-key": key}, json=body, timeout=60)
+        except requests.RequestException:
+            continue
+        if r.status_code == 200:
+            try:
+                v = json.loads(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+            except (KeyError, ValueError):
+                continue
+            result["safe"] = bool(v.get("safe", False))
+            result["reason"] = v.get("reason", "")
+            result["title"] = safe_title(v.get("title") or title)
+            return result
+    # couldn't reach the AI: only post if nothing obviously bad is said
+    result["safe"] = text_is_clean(transcript) and text_is_clean(title)
+    result["reason"] = "" if result["safe"] else "swearing/slurs in the audio (AI check unavailable)"
+    return result

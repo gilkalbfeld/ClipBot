@@ -307,7 +307,8 @@ def renderer():
 
             # Title/description helpers expect a clip-like dict
             clip = {"broadcaster_name": job["name"], "title": "", "url": job["url"]}
-            title = (verdict or {}).get("title") or make_title(clip)   # AI writes a title about what happens
+            from tools.safety import safe_title
+            title = safe_title((verdict or {}).get("title") or make_title(clip))   # AI title, no swear words
             recent_titles.append(title)
             desc = make_description(clip, title, (verdict or {}).get("tags", []))
             info = {

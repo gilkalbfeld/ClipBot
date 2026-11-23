@@ -15,6 +15,8 @@ if job_id:
         msg = ""
     ok = os.environ.get("JOB_STATUS", "") == "success"
     j = jobs.setdefault(job_id, {})
+    if os.environ.get("JOB_KIND"):
+        j.setdefault("kind", os.environ["JOB_KIND"])
     j.update({"status": "done" if ok else "failed",
               "message": msg or ("Done" if ok else "Something went wrong — check the run logs"),
               "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

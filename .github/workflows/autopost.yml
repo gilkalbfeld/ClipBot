@@ -1,0 +1,53 @@
+name: Auto-post to YouTube
+
+on:
+  workflow_dispatch:
+  schedule:
+    # ~9 AM, 12 PM, 3 PM, 6 PM, 9 PM, 12 AM New York (UTC times)
+    - cron: "13 14,17,20,23,2,5 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: autopost
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install requests faster-whisper
+      - run: python tools/autopost.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+      - name: Save + notify
+        if: always()
+        run: |
+          git config user.name "clipbot"
+          git config user.email "clipbot@users.noreply.github.com"
+          cp posted.json /tmp/p.json 2>/dev/null || true
+          cp review.json /tmp/r.json 2>/dev/null || true
+          for i in 1 2 3; do
+            git reset -q --hard origin/main
+            git pull -q origin main || true
+            [ -f /tmp/p.json ] && python3 -c "import json;a=json.load(open('posted.json')) if __import__('os').path.exists('posted.json') else {};a.update(json.load(open('/tmp/p.json')));json.dump(a,open('posted.json','w'),indent=2)"
+            [ -f /tmp/r.json ] && python3 -c "import json;a=json.load(open('review.json')) if __import__('os').path.exists('review.json') else {};a.update(json.load(open('/tmp/r.json')));json.dump(a,open('review.json','w'),indent=2)"
+            [ -f job_message.txt ] && JOB_STATUS="${{ job.status }}" python tools/job_status.py
+            git add posted.json review.json jobs.json 2>/dev/null
+            git diff --cached --quiet && exit 0
+            git commit -qm "Auto-post" && git push -q && exit 0
+          done
+        env:
+          JOB_ID: autopost_${{ github.run_id }}
+          JOB_KIND: post
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

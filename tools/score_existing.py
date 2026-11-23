@@ -86,6 +86,8 @@ def main():
                              "ai_summary": v.get("summary", ""), "ai_tags": v.get("tags", [])})
                 files = []
                 if v.get("title"):
+                    from tools.safety import safe_title
+                    v["title"] = safe_title(v["title"])
                     from edit.titles import make_description, make_tags
                     url = info.get("source_url") or f"https://www.twitch.tv/{streamer}"
                     fake = {"broadcaster_name": streamer, "title": "", "url": url}

@@ -274,6 +274,8 @@ def post_dialog(c, title, desc):
             with st.spinner("Uploading to YouTube… (about 30 seconds)"):
                 try:
                     yt = ytapi.YouTube(YT_ID, YT_SECRET, YT_REFRESH)
+                    from tools.safety import safe_title
+                    t = safe_title(t)
                     vid = ytapi.upload(yt, video_bytes(c["video_asset"]), t, desc.replace(title, t, 1),
                                        tags, privacy)
                 except Exception as e:
@@ -404,7 +406,9 @@ def card(c, posted, show_badge=False, mode="library"):
             f'<div class="ctitle">{html.escape(title or c["id"])}</div>'
             f'<div class="meta"><span class="avatar">{html.escape(name[:1].upper())}</span>'
             f'{html.escape(name)} · {src} · {ago(c["made_at"])}</div>'
-            + (f'<div class="why">{html.escape(info["ai_reason"])}</div>' if info.get("ai_reason") else ""),
+            + (f'<div class="why">{html.escape(info["ai_reason"])}</div>' if info.get("ai_reason") else "")
+            + (f'<div class="why" style="color:#f87171">⚠️ {html.escape(load_review()[c["id"]]["reason"])}</div>'
+               if load_review().get(c["id"], {}).get("reason") else ""),
             unsafe_allow_html=True)
 
         # ---- Ready to Post: only the posting buttons
@@ -611,7 +615,8 @@ def notifications():
     for k, j in load_jobs().items():
         if j.get("status") in ("done", "failed") and j.get("finished_at"):
             icon = "✅" if j["status"] == "done" else "❌"
-            what = (f"Edit of #{j.get('num', '?')}" if j.get("kind") == "edit"
+            what = ("🤖 Auto-post" if j.get("kind") == "post"
+                    else f"Edit of #{j.get('num', '?')}" if j.get("kind") == "edit"
                     else f"📲 {j.get('label', '')[:50]}" if j.get("from_inbox")
                     else f"Find: “{j.get('label', '')[:40]}”")
             events.append((j["finished_at"], f"{icon} {what} — {j.get('message', '')}"))
@@ -643,6 +648,20 @@ def page_ready():
     clips, posted, review = load_clips(), load_posted(), load_review()
     todo = [c for c in clips if review.get(c["id"], {}).get("status") == "approved" and c["id"] not in posted]
     st.title("Ready to Post")
+    ap, sha = gh.read_json("autopost.json")
+    ap = {"enabled": True, "per_day": 6, **ap}
+    with st.container(border=True):
+        a, b, c3 = st.columns([2, 2, 1], vertical_alignment="center")
+        on = a.toggle("🤖 Auto-post to YouTube", value=ap["enabled"],
+                      help="ClipBot posts the best approved / AI-picked clips by itself, after a YouTube safety check")
+        per = b.select_slider("Posts per day", [2, 3, 4, 6, 8, 10], value=ap["per_day"])
+        if (on, per) != (ap["enabled"], ap["per_day"]) and c3.button("Save", use_container_width=True):
+            gh.write_json("autopost.json", {"enabled": on, "per_day": per}, sha, "Auto-post settings")
+            st.toast("Saved")
+            st.rerun()
+        st.caption("Posts about every 3 hours. Approved clips go first, then clips the AI scored 7+. "
+                   "Anything that could get the channel flagged (nudity, slurs, real violence…) is skipped "
+                   "and moved to your Library with the reason.")
     tiles([("Approved, waiting to post", len(todo)), ("Posted", len(posted)),
            ("In New Clips", sum(1 for c in clips if c["id"] not in review and c["id"] not in posted))])
     st.write("")
