@@ -299,5 +299,13 @@
     "streamer": "",
     "source": "Scheduled",
     "at": "2026-11-23T05:17:15+00:00"
+  },
+  "LongHeartlessWhaleMau5-B9NBfqUvbpHRrgP4": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "",
+    "source": "Scheduled",
+    "at": "2026-11-23T05:17:49+00:00"
   }
 }
