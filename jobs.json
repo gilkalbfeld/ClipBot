@@ -80,5 +80,12 @@
     "finished_at": "2026-11-23T06:13:55+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45122224139",
     "resolved": true
+  },
+  "autopost_45234440089": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Speed yells 'What are you doing with my mother?' 💀” → https://youtube.com/shorts/JJJ64boGA7o",
+    "finished_at": "2026-11-23T18:05:15+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45234440089"
   }
 }
