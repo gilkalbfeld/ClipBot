@@ -40,9 +40,10 @@ def exchange_code(client_id, client_secret, redirect_uri, code):
 class YouTube:
     def __init__(self, client_id, client_secret, refresh_token):
         r = requests.post("https://oauth2.googleapis.com/token", data={
-            "client_id": client_id, "client_secret": client_secret,
-            "refresh_token": refresh_token, "grant_type": "refresh_token"}, timeout=30)
-        r.raise_for_status()
+            "client_id": client_id.strip(), "client_secret": client_secret.strip(),
+            "refresh_token": refresh_token.strip().strip('"'), "grant_type": "refresh_token"}, timeout=30)
+        if r.status_code != 200:   # say why (invalid_client = wrong ID/secret, invalid_grant = bad token)
+            raise RuntimeError(f"YouTube login failed: {r.json().get('error')} — {r.json().get('error_description', '')}")
         self.h = {"Authorization": f"Bearer {r.json()['access_token']}"}
 
     def get(self, url, **params):
