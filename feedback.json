@@ -466,5 +466,13 @@
     "streamer": "xqc",
     "source": "Live",
     "at": "2026-11-23T06:13:13+00:00"
+  },
+  "kaicenat_20261119_052706": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "kaicenat",
+    "source": "Live",
+    "at": "2026-11-23T06:13:16+00:00"
   }
 }
