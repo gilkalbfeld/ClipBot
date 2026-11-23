@@ -418,5 +418,13 @@
     "streamer": "kaicenat",
     "source": "Live",
     "at": "2026-11-23T06:12:55+00:00"
+  },
+  "lacy_20261119_061846": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "lacy",
+    "source": "Live",
+    "at": "2026-11-23T06:12:58+00:00"
   }
 }
