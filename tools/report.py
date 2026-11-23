@@ -48,6 +48,18 @@ def avg_by(vids, key_fn):
     return {k: {"videos": len(x), "avg_views": round(sum(x) / len(x))} for k, x in groups.items()}
 
 
+def length_buckets(vids):
+    """Average % watched by clip length (helps pick the best Short length)."""
+    out = {}
+    for name, lo, hi in (("under_20s", 0, 20), ("20-30s", 20, 30), ("30-40s", 30, 40), ("40s+", 40, 999)):
+        g = [v for v in vids if lo <= (v.get("seconds") or 0) < hi and v.get("averageViewPercentage") is not None]
+        if g:
+            out[name] = {"videos": len(g), "max": hi,
+                         "avg_pct_watched": round(sum(v["averageViewPercentage"] for v in g) / len(g), 1),
+                         "avg_views": round(sum(v["views"] for v in g) / len(g))}
+    return out
+
+
 def write_report(stats, key):
     prompt = f"""You are the analyst for ViceClips, a YouTube Shorts channel posting funny GTA 6 clips from streamers.
 Write today's short daily report for the owner (casual, direct, no fluff, use markdown, max ~200 words):
@@ -97,6 +109,7 @@ def main():
                    for v in sorted(vids, key=lambda v: -v["views"])[:40]],
         "by_streamer": avg_by(vids, lambda v: [v["streamer"]] if v["streamer"] else []),
         "by_hashtag": avg_by(vids, lambda v: v["hashtags"]),
+        "by_length": length_buckets(vids),
         "last_28_days": snap.get("daily", []),
         "revenue": snap.get("revenue"),
     }
@@ -112,6 +125,7 @@ def main():
         f.write(f"# ViceClips report — {stats['date']}\n\n{text}\n")
     with open("youtube_stats.json", "w") as f:
         json.dump({"channel": ch, "by_streamer": stats["by_streamer"], "by_hashtag": stats["by_hashtag"],
+                   "by_length": stats["by_length"],
                    "date": stats["date"]}, f, indent=2)
     print(text)
 

@@ -72,7 +72,7 @@ def make_vertical(video, srt_path, out_path, has_caps, layout, hook=""):
     if hook and font:
         words, lines, cur = hook.split(), [], ""
         for w in words:
-            if len(cur) + len(w) > 18 and cur:
+            if len(cur) + len(w) > 16 and cur:
                 lines.append(cur.strip())
                 cur = ""
             cur += w + " "
@@ -80,7 +80,7 @@ def make_vertical(video, srt_path, out_path, has_caps, layout, hook=""):
         hook_file = out_path + ".hook.txt"
         with open(hook_file, "w") as f:
             f.write("\n".join(lines[:2]))
-        chain += (f",drawtext=fontfile='{font}':textfile='{hook_file}':fontsize=84:fontcolor=white:"
+        chain += (f",drawtext=fontfile='{font}':textfile='{hook_file}':fontsize=76:fontcolor=white:"
                   f"borderw=6:bordercolor=black:line_spacing=12:x=(w-text_w)/2:y=230:enable='lt(t,3.2)'")
     if has_caps:
         style = (
@@ -122,6 +122,14 @@ if __name__ == "__main__":
             print("  download failed, skipping")
             continue
 
+        # AI reads the transcript: trims to the moment (short = more views), hook text + real title
+        from tools.judge import polish
+        from tools.learned import LEARNED
+        from tools.safety import safe_title
+        src, verdict = polish(src, model, clip["broadcaster_name"].lower(), "twitch", clip["title"],
+                              max_len=LEARNED.get("max_len", 35))
+        verdict = verdict or {}
+
         # Pick this video's random options
         layout = weighted_choice(LAYOUTS, "layout_weight")       # favours layouts you rated 👍
         words_per = weighted_choice(CAPTION_WORDS, "words_weight")
@@ -129,10 +137,10 @@ if __name__ == "__main__":
         srt = os.path.join(OUT_DIR, f"{clip['id']}.srt")
         has_caps = make_srt(model, src, srt, words_per)
         out = os.path.join(OUT_DIR, f"{clip['id']}_vertical.mp4")
-        make_vertical(src, srt, out, has_caps, layout)
+        make_vertical(src, srt, out, has_caps, layout, verdict.get("hook", ""))
 
-        yt_title = make_title(clip)
-        yt_desc = make_description(clip, yt_title)
+        yt_title = safe_title(verdict.get("title") or make_title(clip))
+        yt_desc = make_description(clip, yt_title, verdict.get("tags", []))
         info = {
             "youtube_title": yt_title,
             "youtube_description": yt_desc,
@@ -146,6 +154,9 @@ if __name__ == "__main__":
             "captions": has_caps,
             "layout": layout,
             "caption_words": words_per,
+            "ai_score": verdict.get("score"), "ai_reason": verdict.get("reason", ""),
+            "ai_summary": verdict.get("summary", ""), "ai_tags": verdict.get("tags", []),
+            "hook": verdict.get("hook", ""),
             # where this clip sits in the full stream (lets the dashboard re-cut it)
             "platform": "twitch",
             "vod_id": clip.get("video_id") or "",

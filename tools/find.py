@@ -52,12 +52,15 @@ def render(src, streamer, url, verdict, source_type, model, extra=None):
     from edit.titles import make_title, make_description, make_tags
     time.sleep(1.1)   # ids are name_date_time, keep them unique
     cid = f"{streamer}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+    from tools.judge import trim
+    from tools.learned import LEARNED
+    src = trim(src, verdict, LEARNED.get("max_len", 35))      # short, starts near the action
     layout = weighted_choice(LAYOUTS, "layout_weight")
     words = weighted_choice(CAPTION_WORDS, "words_weight")
     srt = os.path.join(OUT, cid + ".srt")
     caps = has_audio(src) and make_srt(model, src, srt, words)
     out = os.path.join(OUT, cid + "_vertical.mp4")
-    make_vertical(src, srt, out, caps, layout)
+    make_vertical(src, srt, out, caps, layout, (verdict or {}).get("hook", ""))
     clip = {"broadcaster_name": streamer, "title": "", "url": url}
     from tools.safety import safe_title
     title = safe_title((verdict or {}).get("title") or make_title(clip))
@@ -69,6 +72,7 @@ def render(src, streamer, url, verdict, source_type, model, extra=None):
         "ai_score": (verdict or {}).get("score"), "ai_reason": (verdict or {}).get("reason", ""),
         "ai_summary": (verdict or {}).get("summary", ""), "ai_tags": (verdict or {}).get("tags", []),
         "match": (verdict or {}).get("match"),
+        "hook": (verdict or {}).get("hook", ""),
         "made_at_utc": datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S"),
     }
     info.update(extra or {})

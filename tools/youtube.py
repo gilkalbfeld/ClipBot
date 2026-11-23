@@ -45,6 +45,11 @@ def clean(v):
     return v.strip().strip('"').strip("'").strip("“”").strip()
 
 
+def _secs(iso):
+    m = re.match(r"PT(?:(\d+)M)?(?:(\d+)S)?", iso or "")
+    return (int(m.group(1) or 0) * 60 + int(m.group(2) or 0)) if m else 0
+
+
 class YouTube:
     def __init__(self, client_id, client_secret, refresh_token):
         client_id, client_secret, refresh_token = clean(client_id), clean(client_secret), clean(refresh_token)
@@ -96,6 +101,7 @@ class YouTube:
                     "views": int(st.get("viewCount", 0)), "likes": int(st.get("likeCount", 0)),
                     "comments": int(st.get("commentCount", 0)),
                     "url": f"https://youtube.com/shorts/{v['id']}",
+                    "seconds": _secs(v.get("contentDetails", {}).get("duration", "")),
                 })
         return out
 

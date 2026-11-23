@@ -47,6 +47,9 @@ KEEP_SECONDS = 240         # how much recent stream to keep on disk
 BUCKET = 5                 # chat is counted in 5-second buckets
 SPIKE_X = LEARNED.get("spike_x", 2.5)              # chat must be this many times busier than normal
 MIN_HYPE = LEARNED.get("min_hype", 25)              # ...and at least this much hype in 10 seconds
+MIN_AI_SCORE = LEARNED.get("min_ai_score", 6)       # AI judge: clips scoring below this are thrown out
+AI_TRIM = True                                      # let the AI tighten the clip around the real moment
+MAX_LEN = LEARNED.get("max_len", 35)                # Shorts this long or shorter keep people watching
 COOLDOWN = LEARNED.get("cooldown", 90)              # seconds between clips from the same stream
 RENDERERS = 2              # clips finished at the same time
 WARMUP = 60                # seconds of chat to learn what "normal" is
@@ -281,6 +284,15 @@ def renderer():
             if not verdict:   # video quota used up -> read the transcript instead
                 verdict = judge_text(transcribe(job["src"], model), job["name"], job["platform"],
                                      job["stream_title"], recent_titles)
+                if verdict and verdict["score"] < MIN_AI_SCORE:
+                    log(f"[{job['name']}] ✗ thrown out (transcript score {verdict['score']})")
+                    stats["rejected"] += 1
+                    continue
+                if verdict:   # trim to the moment from the transcript timings
+                    from tools.judge import trim
+                    new = trim(job["src"], verdict, MAX_LEN)
+                    if new != job["src"]:
+                        os.replace(new, job["src"])
             if verdict:
                 log(f"[{job['name']}] 🤖 AI score {verdict['score']}/10 — {verdict.get('reason', '')}")
                 if verdict["score"] < MIN_AI_SCORE:
@@ -303,7 +315,7 @@ def renderer():
             srt = os.path.join(OUT_DIR, job["id"] + ".srt")
             has_caps = has_audio(job["src"]) and make_srt(model, job["src"], srt, words_per)
             out = os.path.join(OUT_DIR, job["id"] + "_vertical.mp4")
-            make_vertical(job["src"], srt, out, has_caps, layout)
+            make_vertical(job["src"], srt, out, has_caps, layout, (verdict or {}).get("hook", ""))
 
             # Title/description helpers expect a clip-like dict
             clip = {"broadcaster_name": job["name"], "title": "", "url": job["url"]}
@@ -327,6 +339,7 @@ def renderer():
                 "ai_reason": verdict.get("reason", "") if verdict else "",
                 "ai_problems": verdict.get("problems", []) if verdict else [],
                 "ai_summary": verdict.get("summary", "") if verdict else "",
+                "hook": verdict.get("hook", "") if verdict else "",
                 "ai_tags": verdict.get("tags", []) if verdict else [],
                 "captions": bool(has_caps),
                 "layout": layout,

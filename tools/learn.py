@@ -137,6 +137,13 @@ def main():
             elif mult <= 0.7:
                 notes.append(f"{name}'s videos get fewer views on YouTube — lower priority")
 
+    # ---- best Short length from real retention (needs 3+ videos in a bucket)
+    bl = {k: v for k, v in yts.get("by_length", {}).items() if v.get("videos", 0) >= 3}
+    if len(bl) >= 2:
+        best = max(bl.values(), key=lambda v: v["avg_pct_watched"] * (v["avg_views"] ** 0.5))
+        learned["max_len"] = max(15, min(50, best["max"] if best["max"] < 999 else 50))
+        notes.append(f"Shorts up to {learned['max_len']}s hold viewers best on your channel — cutting clips to that")
+
     # ---- what you told ClipBot in the dashboard chat (instructions.json) wins over guesses
     ins = load("instructions.json", {})
     for k, v in ins.get("settings", {}).items():
