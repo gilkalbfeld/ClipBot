@@ -24,16 +24,20 @@ CAUTION (allowed only if brief and not the focus): heavy swearing, in-game sexua
 OK: normal GTA violence, crashes, police chases, rage/screaming, banter, mild swearing, funny NPC moments."""
 
 
+PREFIX = {"fuck", "shit", "nigg", "fag", "retard", "porn", "bitch"}   # match words starting with these
+PATTERNS = [re.compile((r"\b" + re.escape(w) + r"\w*") if w in PREFIX else (r"\b" + re.escape(w) + r"s?\b"), re.I)
+            for w in BANNED_WORDS]
+
+
 def text_is_clean(text):
-    t = text.lower()
-    return not any(w in t for w in BANNED_WORDS)
+    return not any(p.search(text) for p in PATTERNS)
 
 
 def safe_title(title):
-    """Masks any banned word that slipped into a title."""
+    """Masks any banned word that slipped into a title (whole words only, so 'document' stays fine)."""
     out = title
-    for w in BANNED_WORDS:
-        out = re.sub(re.escape(w), lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), out, flags=re.I)
+    for p in PATTERNS:
+        out = p.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), out)
     return out
 
 
