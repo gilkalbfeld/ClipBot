@@ -21,7 +21,9 @@ focus), slurs or hate speech said by anyone (n-word, f-slur, etc.), harassment o
 or injuries, self-harm talk, minors in risky situations, dangerous real-world acts, doxxing / personal info,
 drugs being used for real, scams, misleading clickbait.
 CAUTION (allowed only if brief and not the focus): heavy swearing, in-game sexual jokes, in-game drug content.
-OK: normal GTA violence, crashes, police chases, rage/screaming, banter, mild swearing, funny NPC moments."""
+OK: normal GTA violence, guns, crimes, robberies, in-game drug missions, crashes, police chases, rage/screaming,
+banter, swearing in the audio, funny NPC moments, and naming the real streamer in the title (that's normal credit).
+If the ONLY problem is swearing or a sketchy word in the TITLE, mark it safe and rewrite the title clean."""
 
 
 PREFIX = {"fuck", "shit", "nigg", "fag", "retard", "porn", "bitch"}   # match words starting with these
