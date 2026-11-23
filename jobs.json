@@ -94,5 +94,12 @@
     "message": "Posted “Did Kyle turn into a mutant from eating? 🍔” → https://youtube.com/shorts/XUp99fyXr04",
     "finished_at": "2026-11-23T20:09:48+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45256270898"
+  },
+  "autopost_45286244957": {
+    "kind": "post",
+    "status": "done",
+    "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
+    "finished_at": "2026-11-23T23:09:44+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45286244957"
   }
 }
