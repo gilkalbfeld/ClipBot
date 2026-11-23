@@ -734,5 +734,13 @@
     "streamer": "ishowspeed",
     "source": "Scheduled",
     "at": "2026-11-23T06:16:31+00:00"
+  },
+  "SmallProductiveHabaneroBibleThump-BFkAo0sNoJ4ntp0d": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "",
+    "source": "Scheduled",
+    "at": "2026-11-23T06:17:23+00:00"
   }
 }
