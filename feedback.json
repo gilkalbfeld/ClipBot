@@ -627,5 +627,13 @@
     "streamer": "",
     "source": "Scheduled",
     "at": "2026-11-23T06:14:13+00:00"
+  },
+  "jynxzi_20261119_040721": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "jynxzi",
+    "source": "Live",
+    "at": "2026-11-23T06:14:20+00:00"
   }
 }
