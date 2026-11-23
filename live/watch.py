@@ -26,10 +26,10 @@ from tools.learned import LEARNED, weighted_choice, streamer_weight, spike_mult 
 # Who to watch, in priority order. platform: "youtube" or "twitch".
 WATCHLIST = [
     {"name": "ishowspeed", "platform": "youtube", "channel": "@IShowSpeed"},
+    {"name": "jynxzi", "platform": "twitch"},
     {"name": "lacy", "platform": "twitch"},
     {"name": "kaicenat", "platform": "twitch"},
     {"name": "xqc", "platform": "twitch"},
-    {"name": "jynxzi", "platform": "twitch"},
     {"name": "caseoh_", "platform": "twitch"},
     {"name": "adinross", "platform": "twitch"},
     {"name": "ohnepixel", "platform": "twitch"},

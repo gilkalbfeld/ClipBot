@@ -13,10 +13,10 @@ CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GAME_NAMES = ["Grand Theft Auto VI", "Grand Theft Auto V"]
 
 # Big streamers: we always check their clips (edit anytime)
-FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross", "lacy"]
+FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross", "lacy", "jynxzi"]
 
 # Favorites get pushed up the list (score x this number)
-FAVORITES = {"ishowspeed": 3, "lacy": 2}
+FAVORITES = {"ishowspeed": 3, "jynxzi": 3, "lacy": 2}
 FAMOUS_ANY_GAME = False  # True = any game, False = only their GTA clips
 
 LANGUAGE = "en"      # "en" = English only

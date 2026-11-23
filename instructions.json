@@ -1,7 +1,8 @@
 {
   "rules": [
     "Never clip streamers when they are off-game or on commercial breaks.",
-    "Every clip must feature a funny moment, hook, or action in the first 5 seconds with a strong streamer reaction."
+    "Every clip must feature a funny moment, hook, or action in the first 5 seconds with a strong streamer reaction.",
+    "Prioritise Jynxzi — his clips get the most views on the channel."
   ],
   "settings": {
     "min_ai_score": 9
@@ -44,5 +45,8 @@
   ],
   "developer_requests": [
     "Update AI judge prompt to strictly filter out off-game footage and ensure a strong hook or reaction in the first 5 seconds."
-  ]
+  ],
+  "streamers": {
+    "jynxzi": 3
+  }
 }
