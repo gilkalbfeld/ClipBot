@@ -39,7 +39,8 @@
     "started_at": "2026-11-23T06:01:10+00:00",
     "message": "Re-cut done — new version is 60s long",
     "finished_at": "2026-11-23T06:05:26+00:00",
-    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45121364552"
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45121364552",
+    "resolved": true
   },
   "edit_20261123060423_217": {
     "clip_id": "ResoluteCrazyPistachioPrimeMe-FgUccHgoroOQYUJB",
