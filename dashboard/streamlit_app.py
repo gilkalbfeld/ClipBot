@@ -184,6 +184,12 @@ def load_runs():
     return gh.recent_runs(8)
 
 
+def in_editor():
+    """Clips being re-cut (or re-cut and waiting for your OK) live only in the Editor."""
+    return {j.get("clip_id") for j in load_jobs().values()
+            if j.get("kind") == "edit" and not j.get("resolved") and j.get("clip_id")}
+
+
 def refresh():
     for f in (load_clips, load_posted, load_feedback, load_runs, load_review, load_jobs, load_meta):
         f.clear()
@@ -577,10 +583,11 @@ def page_editor():
     @st.fragment(run_every=15)
     def live_list():
         load_jobs.clear()
-        jobs = sorted(((k, v) for k, v in load_jobs().items() if v.get("kind") == "edit"),
+        jobs = sorted(((k, v) for k, v in load_jobs().items() if v.get("kind") == "edit" and not v.get("resolved")),
                       key=lambda kv: kv[1].get("started_at", ""), reverse=True)
         if not jobs:
-            st.info("No edits yet. Open a clip's ⋯ menu → ✂️ Fix timing.")
+            st.info("Nothing in the Editor. Open a clip's ⋯ menu → ✂️ Fix timing — it moves here until you "
+                    "approve it.")
             return
         clips = {c["id"]: c for c in load_clips()}
         for job_id, j in jobs[:20]:
@@ -604,18 +611,50 @@ def page_editor():
                 elif status == "done":
                     st.success(j.get("message", "Done"))
                     c = clips.get(j.get("clip_id"))
-                    if c and "thumb_asset" in c:
-                        a, b = st.columns([1, 2])
-                        a.image(thumb_bytes(c["thumb_asset"]), use_container_width=True)
-                        if b.button("▶ Watch new version", key="ed" + job_id, use_container_width=True):
-                            st.session_state.playing = c["id"]
-                            st.session_state.page = "Library"
-                            st.rerun()
+                    if c:
+                        if st.session_state.get("ed_play") == job_id:
+                            st.video(video_bytes(c["video_asset"]), format="video/mp4", autoplay=True)
+                        else:
+                            if "thumb_asset" in c:
+                                st.image(thumb_bytes(c["thumb_asset"]), width=320)
+                            if st.button("▶ Watch new version", key="ed" + job_id):
+                                st.session_state.ed_play = job_id
+                                st.rerun()
+                        if not j.get("resolved"):
+                            editor_actions(job_id, c, j)
                 else:
                     st.error(j.get("message", "Failed"))
                     if j.get("run_url"):
                         st.caption(f"[Details]({j['run_url']})")
+                    c = clips.get(j.get("clip_id"))
+                    if c and not j.get("resolved"):
+                        if st.button("↩ Send it back unchanged", key="back" + job_id):
+                            gh.resolve_job(job_id)
+                            refresh()
+                            st.rerun()
     live_list()
+
+
+def editor_actions(job_id, c, j):
+    """After a re-cut: decide where the clip goes next."""
+    a, b, c3, d = st.columns(4, gap="small")
+    if a.button("✅ Approve", key="eap" + job_id, type="primary", use_container_width=True,
+                help="Send it to Ready to Post"):
+        gh.set_review(c, "approved")
+        gh.resolve_job(job_id)
+        refresh()
+        st.rerun()
+    if b.button("📚 Library", key="elib" + job_id, use_container_width=True):
+        gh.set_review(c, "library")
+        gh.resolve_job(job_id)
+        refresh()
+        st.rerun()
+    if c3.button("✂️ Again", key="eagain" + job_id, use_container_width=True, help="Re-cut it again"):
+        gh.resolve_job(job_id)
+        recut_dialog(c, j.get("title", ""))
+    if d.button("🗑", key="edel" + job_id, use_container_width=True, help="Delete clip"):
+        gh.resolve_job(job_id)
+        delete_dialog(c, j.get("title", ""))
 
 
 def notifications():
@@ -644,7 +683,8 @@ def notifications():
 
 def page_new():
     clips, posted, review = load_clips(), load_posted(), load_review()
-    new = [c for c in clips if c["id"] not in review and c["id"] not in posted]
+    ed = in_editor()
+    new = [c for c in clips if c["id"] not in review and c["id"] not in posted and c["id"] not in ed]
     st.title("New Clips")
     st.caption("Fresh clips from the bot. ✅ Approve → Ready to Post · 📚 Keep → Library only · 🗑 Delete.")
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -657,7 +697,9 @@ def page_new():
 
 def page_ready():
     clips, posted, review = load_clips(), load_posted(), load_review()
-    todo = [c for c in clips if review.get(c["id"], {}).get("status") == "approved" and c["id"] not in posted]
+    ed = in_editor()
+    todo = [c for c in clips if review.get(c["id"], {}).get("status") == "approved" and c["id"] not in posted
+            and c["id"] not in ed]
     st.title("Ready to Post")
     ap, sha = gh.read_json("autopost.json")
     ap = {"enabled": True, "per_day": 6, **ap}
@@ -695,8 +737,9 @@ def page_library():
         if c["id"] in posted:
             return "Posted"
         return {"approved": "Approved", "library": "Kept"}.get(review.get(c["id"], {}).get("status"), "New")
-    out = [c for c in clips
-           if (who == "All" or c["streamer"] == who) and (status == "All" or status_of(c) == status)]
+    ed = in_editor()
+    out = [c for c in clips if c["id"] not in ed
+           and (who == "All" or c["streamer"] == who) and (status == "All" or status_of(c) == status)]
     if q:
         out = search(out, q)
 

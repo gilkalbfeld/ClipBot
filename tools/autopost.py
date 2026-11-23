@@ -59,6 +59,8 @@ def main():
         print("Auto-posting is turned off")
         return
     posted, review, fb = load("posted.json", {}), load("review.json", {}), load("feedback.json", {})
+    editing = {j.get("clip_id") for j in load("jobs.json", {}).values()
+               if j.get("kind") == "edit" and not j.get("resolved")}
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     # count ALL posts in the last 24h (yours + ClipBot's) so the channel isn't flooded
     since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
@@ -73,7 +75,7 @@ def main():
     for c in clips():
         cid, info = c["id"], c["info"]
         status = review.get(cid, {}).get("status")
-        if cid in posted or status == "library" or fb.get(cid, {}).get("rating", 0) < 0:
+        if cid in posted or cid in editing or status == "library" or fb.get(cid, {}).get("rating", 0) < 0:
             continue
         score = info.get("ai_score") or 0
         if status != "approved" and score < FALLBACK_SCORE:

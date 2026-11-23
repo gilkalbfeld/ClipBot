@@ -242,6 +242,13 @@ class GitHub:
     def jobs(self):
         return self.read_json("jobs.json")[0]
 
+    def resolve_job(self, job_id):
+        """You've dealt with this edit (approved / kept / deleted) — it leaves the Editor."""
+        jobs, sha = self.read_json("jobs.json")
+        if job_id in jobs:
+            jobs[job_id]["resolved"] = True
+            self.write_json("jobs.json", jobs, sha, f"Resolve {job_id}")
+
     # ---------- runs ----------
     def start_workflow(self, file, inputs=None):
         r = self.s.post(f"{API}/repos/{self.repo}/actions/workflows/{file}/dispatches",
