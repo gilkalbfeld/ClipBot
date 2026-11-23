@@ -5,26 +5,63 @@
     "published": "2024-11-04",
     "subscribers": 0,
     "views": 306,
-    "videos": 3,
+    "videos": 7,
     "uploads": "UUhj5nhgpFx9zMNc6R96ELHg"
   },
-  "by_streamer": {},
+  "by_streamer": {
+    "kaicenat": {
+      "videos": 1,
+      "avg_views": 1
+    },
+    "IShowSpeed": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "stableronaldo": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "ishowspeed": {
+      "videos": 1,
+      "avg_views": 1
+    }
+  },
   "by_hashtag": {
+    "#gaming": {
+      "videos": 4,
+      "avg_views": 0
+    },
     "#gta6": {
-      "videos": 3,
-      "avg_views": 102
+      "videos": 7,
+      "avg_views": 44
+    },
+    "#gta6funnymoments": {
+      "videos": 4,
+      "avg_views": 0
     },
     "#gtavi": {
-      "videos": 3,
-      "avg_views": 102
+      "videos": 7,
+      "avg_views": 44
     },
     "#kaicenat": {
-      "videos": 1,
-      "avg_views": 3
+      "videos": 2,
+      "avg_views": 2
     },
     "#shorts": {
-      "videos": 3,
-      "avg_views": 102
+      "videos": 7,
+      "avg_views": 44
+    },
+    "#speed": {
+      "videos": 2,
+      "avg_views": 0
+    },
+    "#gtav": {
+      "videos": 2,
+      "avg_views": 0
+    },
+    "#stableronaldo": {
+      "videos": 1,
+      "avg_views": 0
     },
     "#twitch": {
       "videos": 3,
@@ -37,6 +74,14 @@
     "#jynxzi": {
       "videos": 1,
       "avg_views": 299
+    }
+  },
+  "by_length": {
+    "40s+": {
+      "videos": 3,
+      "max": 999,
+      "avg_pct_watched": 30.5,
+      "avg_views": 102
     }
   },
   "date": "2026-11-23"
