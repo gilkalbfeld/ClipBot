@@ -150,12 +150,13 @@ def video_bytes(asset_id):
     return gh.asset_bytes(asset_id)
 
 
-@st.cache_data(ttl=None, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner="Loading clip info…")
+def load_meta():
+    return gh.meta_index(load_clips())
+
+
 def clip_info(asset_id):
-    try:
-        return json.loads(gh.asset_text(asset_id))
-    except ValueError:
-        return {}
+    return load_meta().get(str(asset_id), {})
 
 
 @st.cache_data(ttl=None)
@@ -184,7 +185,7 @@ def load_runs():
 
 
 def refresh():
-    for f in (load_clips, load_posted, load_feedback, load_runs, load_review, load_jobs):
+    for f in (load_clips, load_posted, load_feedback, load_runs, load_review, load_jobs, load_meta):
         f.clear()
 
 
@@ -364,8 +365,15 @@ def delete_dialog(c, title):
 
 
 # ---------------- clip card ----------------
+def title_desc(c):
+    info = clip_info(c["json_asset"]) if "json_asset" in c else {}
+    if info.get("youtube_title") and info.get("youtube_description"):
+        return info["youtube_title"], info["youtube_description"]
+    return split_post(post_text(c["post_asset"])) if "post_asset" in c else ("", "")
+
+
 def card(c, posted, show_badge=False, mode="library"):
-    title, desc = split_post(post_text(c["post_asset"])) if "post_asset" in c else ("", "")
+    title, desc = title_desc(c)
     is_posted = c["id"] in posted
     fb = load_feedback().get(c["id"], {})
     info = clip_info(c["json_asset"]) if "json_asset" in c else {}
@@ -504,6 +512,9 @@ def grid(clips, posted, per_page=12, key="g", show_badge=False, mode="library"):
     if pages > 1:
         chunk_page = st.session_state.get(key + "page", 1)
     chunk = clips[(chunk_page - 1) * per_page: chunk_page * per_page]
+    from concurrent.futures import ThreadPoolExecutor   # load this page's thumbnails all at once
+    with ThreadPoolExecutor(12) as pool:
+        list(pool.map(lambda c: thumb_bytes(c["thumb_asset"]) if "thumb_asset" in c else None, chunk))
     cols = st.columns(3, gap="medium")
     for i, c in enumerate(chunk):
         with cols[i % 3]:
@@ -524,7 +535,7 @@ def search(clips, q):
     words = [w for w in q.lower().replace(",", " ").split() if w not in STOP] or q.lower().split()
     scored = []
     for c in clips:
-        title = split_post(post_text(c["post_asset"]))[0] if "post_asset" in c else ""
+        title = title_desc(c)[0]
         info = clip_info(c["json_asset"]) if "json_asset" in c else {}
         hay = " ".join([c["id"], c["streamer"], nice(c["streamer"]), title, c["made_at"],
                         info.get("ai_summary", ""), info.get("ai_reason", ""), " ".join(info.get("ai_tags", [])),

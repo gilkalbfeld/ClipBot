@@ -89,6 +89,35 @@ class GitHub:
         url = self.asset_url(asset_id)
         return requests.get(url, timeout=30).content.decode("utf-8", "ignore") if url else ""
 
+    # ---------- fast clip info: one cached file instead of one download per clip ----------
+    def meta_index(self, clips):
+        """Returns {json_asset_id: clip info}. Keeps a cache in meta_cache.json; only new clips are fetched,
+        and those in parallel."""
+        from concurrent.futures import ThreadPoolExecutor
+        cache, sha = self.read_json("meta_cache.json")
+        want = {str(c["json_asset"]) for c in clips if "json_asset" in c}
+        missing = [a for a in want if a not in cache]
+
+        def fetch(aid):
+            try:
+                return aid, json.loads(self.asset_text(int(aid)))
+            except Exception:
+                return aid, {}
+        if missing:
+            with ThreadPoolExecutor(16) as pool:
+                for aid, info in pool.map(fetch, missing):
+                    keep = {k: info.get(k) for k in (
+                        "youtube_title", "youtube_description", "youtube_tags", "ai_score", "ai_reason",
+                        "ai_summary", "ai_tags", "hook", "streamer", "stream_title", "layout", "caption_words",
+                        "source_url", "platform") if info.get(k) is not None}
+                    cache[aid] = keep
+            cache = {k: v for k, v in cache.items() if k in want}   # forget deleted / replaced clips
+            try:
+                self.write_json("meta_cache.json", cache, sha, f"Cache info for {len(missing)} clips")
+            except requests.HTTPError:
+                pass
+        return cache
+
     # ---------- json files kept in the repo ----------
     def read_json(self, path):
         try:
