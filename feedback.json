@@ -702,5 +702,13 @@
     "streamer": "xqc",
     "source": "Live",
     "at": "2026-11-23T06:14:57+00:00"
+  },
+  "jynxzi_20261119_015906": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "jynxzi",
+    "source": "Live",
+    "at": "2026-11-23T06:15:01+00:00"
   }
 }
