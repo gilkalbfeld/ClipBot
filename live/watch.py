@@ -371,6 +371,38 @@ def renderer():
                 pass
 
 
+# ---------------- conductor: starts the other jobs on time ----------------
+# GitHub's own timers can run hours late, so the always-on watcher kicks things off itself (UTC hours).
+SCHEDULE = {
+    "autopost.yml": [14, 17, 20, 23, 2, 5],   # ~every 3h (9 AM … midnight New York)
+    "make.yml": [12, 17, 22],                 # top GTA clips
+    "find.yml": [13, 19, 1],                  # banger hunts
+    "report.yml": [14],                       # daily report ~9 AM New York
+}
+
+
+def ran_recently(workflow, minutes=100):
+    r = subprocess.run(["gh", "run", "list", "-w", workflow, "-L", "1", "--json", "createdAt",
+                        "-q", ".[0].createdAt"], capture_output=True, text=True)
+    t = r.stdout.strip()
+    if not t:
+        return False
+    started = datetime.fromisoformat(t.replace("Z", "+00:00"))
+    return (datetime.now(timezone.utc) - started).total_seconds() < minutes * 60
+
+
+def conductor():
+    if not RELEASE_TAG:   # only when running on GitHub
+        return
+    while time.time() < stop_at:
+        now = datetime.now(timezone.utc)
+        for wf, hours in SCHEDULE.items():
+            if now.hour in hours and now.minute >= 5 and not ran_recently(wf):
+                log(f"⏰ starting {wf}")
+                subprocess.run(["gh", "workflow", "run", wf])
+        time.sleep(300)
+
+
 # ---------------- main loop ----------------
 
 def start(name, platform, url, title):
@@ -386,6 +418,7 @@ def main():
     for rt in renderers:
         rt.start()
     log(f"Live watcher running for {RUN_MINUTES} minutes")
+    threading.Thread(target=conductor, daemon=True).start()
 
     # streamers you rate 👍 get watched first when there are more live than MAX_STREAMS
     WATCHLIST.sort(key=lambda s: -streamer_weight(s["name"]) if s["name"] != "ishowspeed" else -99)
@@ -426,6 +459,9 @@ def main():
         render_queue.put(None)
     for rt in renderers:
         rt.join(timeout=900)
+    if RELEASE_TAG:   # keep watching: start the next shift ourselves (don't wait on GitHub's timer)
+        log("starting the next shift")
+        subprocess.run(["gh", "workflow", "run", "live.yml", "-f", "minutes=345"])
 
 
 if __name__ == "__main__":
