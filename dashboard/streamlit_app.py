@@ -580,7 +580,10 @@ def page_editor():
     st.title("Editor")
     st.caption("Clips you're re-cutting. Updates by itself every 15 seconds.")
 
-    @st.fragment(run_every=15)
+    playing = bool(st.session_state.get("ed_play"))
+
+    # auto-refresh every 15s — but not while you're watching a clip (it would restart the video)
+    @st.fragment(run_every=None if playing else 15)
     def live_list():
         load_jobs.clear()
         jobs = sorted(((k, v) for k, v in load_jobs().items() if v.get("kind") == "edit" and not v.get("resolved")),
@@ -614,6 +617,9 @@ def page_editor():
                     if c:
                         if st.session_state.get("ed_play") == job_id:
                             st.video(video_bytes(c["video_asset"]), format="video/mp4", autoplay=True)
+                            if st.button("✕ Close video", key="edclose" + job_id):
+                                st.session_state.ed_play = None
+                                st.rerun()
                         else:
                             if "thumb_asset" in c:
                                 st.image(thumb_bytes(c["thumb_asset"]), width=320)
