@@ -394,5 +394,13 @@
     "streamer": "lacy",
     "source": "Live",
     "at": "2026-11-23T06:12:48+00:00"
+  },
+  "lacy_20261119_062816": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "lacy",
+    "source": "Live",
+    "at": "2026-11-23T06:12:50+00:00"
   }
 }
