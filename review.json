@@ -26,5 +26,20 @@
   "RockySourAsteriskTooSpicy-6U8FM1MWLFtUXMc9": {
     "status": "approved",
     "at": "2026-11-23T05:17:14+00:00"
+  },
+  "xqc_20261119_173433": {
+    "status": "library",
+    "reason": "Not YouTube-safe: Title contains heavy swearing ('fucking') which violates the strict 'not ok' or 'caution' policy if it is the focus, and falls under the rejection criteria for slurs/swearing in titles.",
+    "at": "2026-11-23T05:18:09+00:00"
+  },
+  "xqc_20261119_033951": {
+    "status": "library",
+    "reason": "Not YouTube-safe: Features real-life creator names (xQc) in the title combined with an in-game threat involving weapons and drugs, which risks misleading clickbait and advertiser-friendly violations.",
+    "at": "2026-11-23T05:18:15+00:00"
+  },
+  "stableronaldo_20261119_174919": {
+    "status": "library",
+    "reason": "Not YouTube-safe: Includes sexual content/provocative in-game elements and the 18+ emoji in the title which violates advertiser-friendly guidelines.",
+    "at": "2026-11-23T05:18:21+00:00"
   }
 }
