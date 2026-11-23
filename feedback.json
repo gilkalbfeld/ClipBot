@@ -694,5 +694,13 @@
     "streamer": "",
     "source": "Scheduled",
     "at": "2026-11-23T06:14:54+00:00"
+  },
+  "xqc_20261119_020037": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "xqc",
+    "source": "Live",
+    "at": "2026-11-23T06:14:57+00:00"
   }
 }
