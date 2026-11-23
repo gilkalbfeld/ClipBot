@@ -54,7 +54,8 @@ Reply ONLY with JSON:
             Avoid generic templates like 'can't believe what happened' or 'was NOT ready'.",
   "summary": "2-3 plain sentences describing exactly what happens: characters (e.g. Jason, Lucia), places,
               vehicles, actions, what the streamer says/does. Used for searching clips later.",
-  "tags": ["5-8 short search tags about the content, e.g. 'fishing', 'police chase', 'lucia', 'boat'"]}}"""
+  "tags": ["5-8 short search tags about the content, e.g. 'fishing', 'police chase', 'lucia', 'boat'"],
+  "hook": "3-6 word ALL CAPS on-screen hook for the first second, no emojis, e.g. HE WAS NOT READY"}}"""
 
 
 def nick(streamer):
@@ -144,7 +145,10 @@ Based on what the streamer says and reacts to, reply ONLY with JSON:
             ("Why did CaseOh just drive into the ocean? 🌊"), or a POV.
             Don't reuse these recent titles' wording: {avoid}",
   "summary": "2-3 plain sentences on what happens (characters like Jason/Lucia, places, cars, actions, quotes). For search.",
-  "tags": ["5-8 short search tags"]}}"""
+  "tags": ["5-8 short search tags"],
+  "moment_start": seconds (from the transcript times) where the setup of the best moment starts,
+  "moment_end": seconds where the reaction/payoff is over,
+  "hook": "3-6 word ALL CAPS on-screen hook for the first second, no emojis, e.g. HE WAS NOT READY"}}"""
 
 
 def judge_text(transcript, streamer, platform="twitch", stream_title="", avoid=(), want=""):
@@ -196,3 +200,35 @@ def transcribe(video, model=None):
     model = model or WhisperModel("base", device="cpu", compute_type="int8")
     segs, _ = model.transcribe(video, vad_filter=True)
     return "\n".join(f"[{int(s.start)}s] {s.text.strip()}" for s in segs)
+
+
+def trim(src, verdict, max_len=35, pad_before=2.0, pad_after=2.5):
+    """Cut the clip down to the real moment, at most max_len seconds (short Shorts keep viewers)."""
+    import subprocess as sp
+    try:
+        dur = float(sp.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src],
+                           capture_output=True, text=True).stdout.strip())
+    except ValueError:
+        return src
+    ms, me = (verdict or {}).get("moment_start"), (verdict or {}).get("moment_end")
+    if isinstance(ms, (int, float)) and isinstance(me, (int, float)) and me > ms:
+        a, b = max(0, ms - pad_before), min(dur, me + pad_after)
+    else:
+        a, b = 0, dur
+    if b - a > max_len:          # too long: keep the end (the payoff) and the lead-up right before it
+        a = b - max_len
+    if b - a < 8:                # too short to make sense: widen
+        a, b = max(0, b - 12), min(dur, b + 2)
+    if a <= 0.5 and b >= dur - 0.5:
+        return src
+    out = src.rsplit(".", 1)[0] + "_trim.mp4"
+    r = sp.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{a:.2f}", "-to", f"{b:.2f}", "-i", src,
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-c:a", "aac", out])
+    return out if r.returncode == 0 else src
+
+
+def polish(src, model, streamer, platform="twitch", stream_title="", avoid=(), verdict=None, max_len=35):
+    """One call for every clip: AI review (if not done), trim to the moment, and return (new_src, verdict)."""
+    if not verdict:
+        verdict = judge_text(transcribe(src, model), streamer, platform, stream_title, avoid)
+    return trim(src, verdict, max_len), verdict

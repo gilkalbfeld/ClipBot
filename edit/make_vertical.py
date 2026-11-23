@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import random
 import subprocess
 import sys
@@ -53,8 +54,34 @@ def make_srt(model, video, srt_path, words_per):
     return True
 
 
-def make_vertical(video, srt_path, out_path, has_caps, layout):
+def hook_font():
+    import glob as _g
+    for pat in ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/**/*Sans*Bold*.ttf",
+                "/usr/share/fonts/**/*Bold*.ttf"]:
+        found = _g.glob(pat, recursive=True)
+        if found:
+            return found[0]
+    return ""
+
+
+def make_vertical(video, srt_path, out_path, has_caps, layout, hook=""):
     chain = LAYOUTS[layout]
+    # big hook text at the top for the first ~3 seconds (stops the scroll)
+    hook = re.sub(r"[^\w\s!?'.,$&-]", "", hook or "").strip().upper()[:40]
+    font = hook_font() if hook else ""
+    if hook and font:
+        words, lines, cur = hook.split(), [], ""
+        for w in words:
+            if len(cur) + len(w) > 18 and cur:
+                lines.append(cur.strip())
+                cur = ""
+            cur += w + " "
+        lines.append(cur.strip())
+        hook_file = out_path + ".hook.txt"
+        with open(hook_file, "w") as f:
+            f.write("\n".join(lines[:2]))
+        chain += (f",drawtext=fontfile='{font}':textfile='{hook_file}':fontsize=84:fontcolor=white:"
+                  f"borderw=6:bordercolor=black:line_spacing=12:x=(w-text_w)/2:y=230:enable='lt(t,3.2)'")
     if has_caps:
         style = (
             "FontSize=64,Bold=1,Outline=4,Shadow=0,"
