@@ -314,7 +314,8 @@ def renderer():
             layout = weighted_choice(LAYOUTS, "layout_weight")
             words_per = weighted_choice(CAPTION_WORDS, "words_weight")
             srt = os.path.join(OUT_DIR, job["id"] + ".srt")
-            has_caps = has_audio(job["src"]) and make_srt(model, job["src"], srt, words_per)
+            has_caps = (verdict or {}).get("captions", True) and has_audio(job["src"]) and \
+                make_srt(model, job["src"], srt, words_per)
             out = os.path.join(OUT_DIR, job["id"] + "_vertical.mp4")
             make_vertical(job["src"], srt, out, has_caps, layout, (verdict or {}).get("hook", ""))
 

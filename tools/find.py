@@ -58,7 +58,7 @@ def render(src, streamer, url, verdict, source_type, model, extra=None):
     layout = weighted_choice(LAYOUTS, "layout_weight")
     words = weighted_choice(CAPTION_WORDS, "words_weight")
     srt = os.path.join(OUT, cid + ".srt")
-    caps = has_audio(src) and make_srt(model, src, srt, words)
+    caps = (verdict or {}).get("captions", True) and has_audio(src) and make_srt(model, src, srt, words)
     out = os.path.join(OUT, cid + "_vertical.mp4")
     make_vertical(src, srt, out, caps, layout, (verdict or {}).get("hook", ""))
     clip = {"broadcaster_name": streamer, "title": "", "url": url}
@@ -76,6 +76,11 @@ def render(src, streamer, url, verdict, source_type, model, extra=None):
         "made_at_utc": datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S"),
     }
     info.update(extra or {})
+    last = getattr(trim, "last", None)
+    if last and info.get("vod_window"):   # line the saved window up with the trimmed clip
+        w0 = info["vod_window"][0]
+        info["vod_window"] = [w0 + last[0], w0 + last[1]]
+    info["trimmed_to"] = True
     with open(os.path.join(OUT, cid + ".json"), "w") as f:
         json.dump(info, f, indent=2)
     with open(os.path.join(OUT, cid + "_post.txt"), "w", encoding="utf-8") as f:

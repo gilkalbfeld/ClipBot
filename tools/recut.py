@@ -113,6 +113,22 @@ def main():
                 info["vod_id"] = vid
             w0, w1 = a - start - LATENCY, b - start - LATENCY
 
+        # older clips were trimmed after their window was saved: line it up with the clip you actually see
+        if not info.get("trimmed_to") and info.get("vod_window"):
+            r = subprocess.run(["gh", "release", "download", tag, "-p", f"{cid}_vertical.mp4", "-D", d, "--clobber"],
+                               capture_output=True)
+            cur = os.path.join(d, f"{cid}_vertical.mp4")
+            if os.path.exists(cur):
+                try:
+                    seen = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                                 "-of", "csv=p=0", cur], capture_output=True, text=True).stdout)
+                    if seen < (w1 - w0) - 1:
+                        w0 = w1 - seen
+                        print(f"lined up with the {seen:.0f}s clip you see")
+                except ValueError:
+                    pass
+                os.remove(cur)
+
         # 2) apply your adjustment
         n0, n1 = max(0, w0 + shift_start), w1 + shift_end
         if n1 - n0 < 8:
@@ -132,14 +148,15 @@ def main():
         layout = info.get("layout", "blur")
         words = info.get("caption_words", 3)
         srt = os.path.join(d, "c.srt")
-        caps = has_audio(raw) and make_srt(model, raw, srt, words)
+        caps = info.get("captions", True) and has_audio(raw) and make_srt(model, raw, srt, words)
         out = os.path.join(d, f"{cid}_vertical.mp4")
-        make_vertical(raw, srt, out, caps, layout)
+        make_vertical(raw, srt, out, caps, layout, info.get("hook", ""))
         thumb = os.path.join(d, f"{cid}_thumb.jpg")
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", "2", "-i", out, "-frames:v", "1",
                         "-vf", "crop=iw:iw*3/4:0:(ih-iw*3/4)/2,scale=640:-2", "-q:v", "4", thumb], check=True)
 
         info["vod_window"] = [n0, n1]
+        info["trimmed_to"] = True
         info["recut_count"] = info.get("recut_count", 0) + 1
         jpath = os.path.join(d, f"{cid}.json")
         with open(jpath, "w") as f:

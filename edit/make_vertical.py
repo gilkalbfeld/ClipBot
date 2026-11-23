@@ -58,6 +58,18 @@ def make_srt(model, video, srt_path, words_per):
     return True
 
 
+def vod_window(clip):
+    """Where the FINAL (trimmed) clip sits in the streamer's saved stream — lets re-cuts line up exactly."""
+    if clip.get("vod_offset") is None:
+        return None
+    from tools.judge import trim
+    w0 = clip["vod_offset"]
+    last = getattr(trim, "last", None)
+    if last:
+        return [w0 + last[0], w0 + last[1]]
+    return [w0, w0 + clip["duration"]]
+
+
 def hook_font():
     import glob as _g
     for pat in ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/**/*Sans*Bold*.ttf",
@@ -140,7 +152,7 @@ if __name__ == "__main__":
         words_per = weighted_choice(CAPTION_WORDS, "words_weight")
 
         srt = os.path.join(OUT_DIR, f"{clip['id']}.srt")
-        has_caps = make_srt(model, src, srt, words_per)
+        has_caps = verdict.get("captions", True) and make_srt(model, src, srt, words_per)
         out = os.path.join(OUT_DIR, f"{clip['id']}_vertical.mp4")
         make_vertical(src, srt, out, has_caps, layout, verdict.get("hook", ""))
 
@@ -165,8 +177,8 @@ if __name__ == "__main__":
             # where this clip sits in the full stream (lets the dashboard re-cut it)
             "platform": "twitch",
             "vod_id": clip.get("video_id") or "",
-            "vod_window": ([clip["vod_offset"], clip["vod_offset"] + clip["duration"]]
-                           if clip.get("vod_offset") is not None else None),
+            "vod_window": vod_window(clip),
+            "trimmed_to": True,
         }
         with open(os.path.join(OUT_DIR, f"{clip['id']}.json"), "w") as f:
             json.dump(info, f, indent=2)

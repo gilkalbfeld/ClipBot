@@ -55,6 +55,8 @@ Reply ONLY with JSON:
   "summary": "2-3 plain sentences describing exactly what happens: characters (e.g. Jason, Lucia), places,
               vehicles, actions, what the streamer says/does. Used for searching clips later.",
   "tags": ["5-8 short search tags about the content, e.g. 'fishing', 'police chase', 'lucia', 'boat'"],
+  "captions": true if the STREAMER's own talking/reaction is the main thing; false if it's mostly in-game
+              dialogue/cutscene (the game already shows subtitles) or there's barely any speech,
   "hook": "3-6 word ALL CAPS on-screen hook for the first second, no emojis, e.g. HE WAS NOT READY"}}"""
 
 
@@ -148,6 +150,8 @@ Based on what the streamer says and reacts to, reply ONLY with JSON:
   "tags": ["5-8 short search tags"],
   "moment_start": seconds (from the transcript times) where the setup of the best moment starts,
   "moment_end": seconds where the reaction/payoff is over,
+  "captions": true if the STREAMER's own talking/reaction is the main thing; false if it's mostly in-game
+              dialogue/cutscene (the game already shows subtitles) or there's barely any speech,
   "hook": "3-6 word ALL CAPS on-screen hook for the first second, no emojis, e.g. HE WAS NOT READY"}}"""
 
 
@@ -205,6 +209,7 @@ def transcribe(video, model=None):
 def trim(src, verdict, max_len=35, pad_before=2.0, pad_after=2.5):
     """Cut the clip down to the real moment, at most max_len seconds (short Shorts keep viewers)."""
     import subprocess as sp
+    trim.last = None
     try:
         dur = float(sp.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src],
                            capture_output=True, text=True).stdout.strip())
@@ -219,6 +224,7 @@ def trim(src, verdict, max_len=35, pad_before=2.0, pad_after=2.5):
         a = b - max_len
     if b - a < 8:                # too short to make sense: widen
         a, b = max(0, b - 12), min(dur, b + 2)
+    trim.last = (a, b)
     if a <= 0.5 and b >= dur - 0.5:
         return src
     out = src.rsplit(".", 1)[0] + "_trim.mp4"
