@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -58,7 +58,9 @@ def main():
         return
     posted, review, fb = load("posted.json", {}), load("review.json", {}), load("feedback.json", {})
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    done_today = [v for v in posted.values() if v.get("auto") and v.get("posted_at", "").startswith(today)]
+    # count ALL posts in the last 24h (yours + ClipBot's) so the channel isn't flooded
+    since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    done_today = [v for v in posted.values() if v.get("posted_at", "") > since]
     if len(done_today) >= settings.get("per_day", 6):
         print("Daily limit reached")
         return
