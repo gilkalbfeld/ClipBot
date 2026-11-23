@@ -40,8 +40,12 @@ def fmt(t):
 
 
 def make_srt(model, video, srt_path, words_per):
-    segments, _ = model.transcribe(video, word_timestamps=True)
-    words = [w for seg in segments for w in (seg.words or [])]
+    try:
+        segments, _ = model.transcribe(video, word_timestamps=True)
+        words = [w for seg in segments for w in (seg.words or [])]
+    except Exception as e:   # whisper sometimes fails on odd audio: just skip captions for this clip
+        print("  captions skipped:", str(e)[:100])
+        return False
     if not words:
         return False
     lines = []
@@ -129,6 +133,7 @@ if __name__ == "__main__":
         src, verdict = polish(src, model, clip["broadcaster_name"].lower(), "twitch", clip["title"],
                               max_len=LEARNED.get("max_len", 35))
         verdict = verdict or {}
+        print("  AI:", verdict.get("score"), "|", verdict.get("hook", ""), "|", verdict.get("title", "(no AI title)"))
 
         # Pick this video's random options
         layout = weighted_choice(LAYOUTS, "layout_weight")       # favours layouts you rated 👍
