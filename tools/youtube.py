@@ -37,13 +37,23 @@ def exchange_code(client_id, client_secret, redirect_uri, code):
     return r.json()   # has refresh_token
 
 
+def clean(v):
+    """Accept secrets pasted as 'abc', '"abc"' or 'YT_CLIENT_ID = "abc"'."""
+    v = (v or "").strip()
+    if "=" in v and v.split("=", 1)[0].strip().isupper():
+        v = v.split("=", 1)[1]
+    return v.strip().strip('"').strip("'").strip("“”").strip()
+
+
 class YouTube:
     def __init__(self, client_id, client_secret, refresh_token):
+        client_id, client_secret, refresh_token = clean(client_id), clean(client_secret), clean(refresh_token)
         r = requests.post("https://oauth2.googleapis.com/token", data={
             "client_id": client_id.strip(), "client_secret": client_secret.strip(),
             "refresh_token": refresh_token.strip().strip('"'), "grant_type": "refresh_token"}, timeout=30)
         if r.status_code != 200:   # say why (invalid_client = wrong ID/secret, invalid_grant = bad token)
-            raise RuntimeError(f"YouTube login failed: {r.json().get('error')} — {r.json().get('error_description', '')}")
+            raise RuntimeError(f"YouTube login failed: {r.json().get('error')} — {r.json().get('error_description', '')} "
+                               f"(client id looks like: {client_id[:6]}…{client_id[-27:]}, length {len(client_id)})")
         self.h = {"Authorization": f"Bearer {r.json()['access_token']}"}
 
     def get(self, url, **params):
