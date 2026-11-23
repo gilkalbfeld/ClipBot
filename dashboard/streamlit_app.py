@@ -262,6 +262,31 @@ def share_button(title, fname):
 
 @st.dialog("Post to YouTube")
 def post_dialog(c, title, desc):
+    if YT_REFRESH:
+        st.markdown("**🚀 Upload straight to ViceClips**")
+        t = st.text_input("Title", value=title, max_chars=100)
+        when = st.radio("When", ["Post now", "Unlisted (only people with the link)", "Private (just me)"],
+                        horizontal=False)
+        if st.button("🚀  Upload to YouTube", type="primary", use_container_width=True):
+            privacy = {"Post now": "public", "Unlisted (only people with the link)": "unlisted"}.get(when, "private")
+            info = clip_info(c["json_asset"]) if "json_asset" in c else {}
+            tags = info.get("youtube_tags") or []
+            with st.spinner("Uploading to YouTube… (about 30 seconds)"):
+                try:
+                    yt = ytapi.YouTube(YT_ID, YT_SECRET, YT_REFRESH)
+                    vid = ytapi.upload(yt, video_bytes(c["video_asset"]), t, desc.replace(title, t, 1),
+                                       tags, privacy)
+                except Exception as e:
+                    st.error(f"Upload failed: {str(e)[:300]}")
+                    return
+            url = f"https://youtube.com/shorts/{vid}"
+            gh.set_posted(c["id"], url)
+            refresh()
+            st.success(f"✅ Uploaded! [Open on YouTube]({url})")
+            st.balloons()
+            return
+        st.divider()
+        st.caption("Or post it yourself from your iPad:")
     st.markdown("**1. Get the video on your iPad**")
     st.video(video_bytes(c["video_asset"]), format="video/mp4")
     share_button(title, f"{c['id']}.mp4")

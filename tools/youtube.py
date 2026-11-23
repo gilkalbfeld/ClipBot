@@ -132,3 +132,27 @@ def snapshot(yt):
     for v in vids:
         v.update(an.get(v["id"], {}))
     return {"channel": ch, "videos": vids, "daily": yt.daily(), "revenue": yt.revenue()}
+
+
+# ---------------- uploading ----------------
+def upload(yt, video_bytes, title, description, tags=(), privacy="public", publish_at=None):
+    """Uploads a Short to the channel. Returns the new video id."""
+    status = {"privacyStatus": privacy, "selfDeclaredMadeForKids": False}
+    if publish_at:                    # scheduled: must be private until publish time
+        status.update(privacyStatus="private", publishAt=publish_at)
+    meta = {
+        "snippet": {"title": title[:100], "description": description[:4900],
+                    "tags": [t for t in tags if t][:15], "categoryId": "20"},   # 20 = Gaming
+        "status": status,
+    }
+    r = requests.post(
+        "https://www.googleapis.com/upload/youtube/v3/videos",
+        params={"uploadType": "resumable", "part": "snippet,status"},
+        headers={**yt.h, "Content-Type": "application/json; charset=UTF-8",
+                 "X-Upload-Content-Type": "video/mp4", "X-Upload-Content-Length": str(len(video_bytes))},
+        json=meta, timeout=60)
+    r.raise_for_status()
+    up = requests.put(r.headers["Location"], data=video_bytes,
+                      headers={"Content-Type": "video/mp4"}, timeout=600)
+    up.raise_for_status()
+    return up.json()["id"]
