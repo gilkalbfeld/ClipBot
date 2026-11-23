@@ -686,5 +686,13 @@
     "streamer": "lacy",
     "source": "Live",
     "at": "2026-11-23T06:14:50+00:00"
+  },
+  "BlueIcySnoodSaltBae-qKp3QE1R_FoncNN1": {
+    "rating": -1,
+    "comment": "deleted",
+    "deleted": true,
+    "streamer": "",
+    "source": "Scheduled",
+    "at": "2026-11-23T06:14:54+00:00"
   }
 }
