@@ -4,85 +4,90 @@
     "title": "ViceClips",
     "published": "2024-11-04",
     "subscribers": 0,
-    "views": 306,
-    "videos": 7,
+    "views": 312,
+    "videos": 9,
     "uploads": "UUhj5nhgpFx9zMNc6R96ELHg"
   },
   "by_streamer": {
+    "caseoh_": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "ishowspeed": {
+      "videos": 2,
+      "avg_views": 1
+    },
     "kaicenat": {
       "videos": 1,
       "avg_views": 1
     },
     "IShowSpeed": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 1
     },
     "stableronaldo": {
-      "videos": 1,
-      "avg_views": 0
-    },
-    "ishowspeed": {
       "videos": 1,
       "avg_views": 1
     }
   },
   "by_hashtag": {
-    "#gaming": {
-      "videos": 4,
+    "#caseoh": {
+      "videos": 2,
+      "avg_views": 3
+    },
+    "#caseohgta6": {
+      "videos": 1,
       "avg_views": 0
+    },
+    "#gaming": {
+      "videos": 6,
+      "avg_views": 1
     },
     "#gta6": {
-      "videos": 7,
-      "avg_views": 44
+      "videos": 9,
+      "avg_views": 35
     },
     "#gta6funnymoments": {
-      "videos": 4,
-      "avg_views": 0
+      "videos": 6,
+      "avg_views": 1
     },
     "#gtavi": {
-      "videos": 7,
-      "avg_views": 44
+      "videos": 9,
+      "avg_views": 35
+    },
+    "#shorts": {
+      "videos": 9,
+      "avg_views": 35
+    },
+    "#ishowspeed": {
+      "videos": 1,
+      "avg_views": 1
+    },
+    "#speed": {
+      "videos": 3,
+      "avg_views": 1
     },
     "#kaicenat": {
       "videos": 2,
       "avg_views": 2
     },
-    "#shorts": {
-      "videos": 7,
-      "avg_views": 44
-    },
-    "#speed": {
-      "videos": 2,
-      "avg_views": 0
-    },
     "#gtav": {
       "videos": 2,
-      "avg_views": 0
+      "avg_views": 1
     },
     "#stableronaldo": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 1
     },
     "#twitch": {
       "videos": 3,
-      "avg_views": 102
-    },
-    "#caseoh": {
-      "videos": 1,
-      "avg_views": 4
+      "avg_views": 104
     },
     "#jynxzi": {
       "videos": 1,
-      "avg_views": 299
+      "avg_views": 301
     }
   },
-  "by_length": {
-    "40s+": {
-      "videos": 3,
-      "max": 999,
-      "avg_pct_watched": 30.5,
-      "avg_views": 102
-    }
-  },
-  "date": "2026-11-23"
+  "by_length": {},
+  "date": "2026-11-24"
 }
