@@ -115,5 +115,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-24T05:09:46+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45331222434"
+  },
+  "autopost_45392999677": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Stableronaldo trying to get off screen before getting in trouble 💀” → https://youtube.com/shorts/lK3kVryDlkA",
+    "finished_at": "2026-11-24T12:24:11+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45392999677"
   }
 }
