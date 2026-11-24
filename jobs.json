@@ -150,5 +150,12 @@
     "message": "Posted “Kai Cenat meets Jason and gets confronted 💀” → https://youtube.com/shorts/trfLQSBVSRU",
     "finished_at": "2026-11-24T23:10:44+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45507516391"
+  },
+  "autopost_45510211686": {
+    "kind": "post",
+    "status": "done",
+    "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
+    "finished_at": "2026-11-24T23:28:52+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45510211686"
   }
 }
