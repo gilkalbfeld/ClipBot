@@ -4,26 +4,30 @@
     "title": "ViceClips",
     "published": "2024-11-04",
     "subscribers": 0,
-    "views": 312,
-    "videos": 9,
+    "views": 316,
+    "videos": 13,
     "uploads": "UUhj5nhgpFx9zMNc6R96ELHg"
   },
   "by_streamer": {
+    "kaicenat": {
+      "videos": 3,
+      "avg_views": 1
+    },
+    "lacy": {
+      "videos": 2,
+      "avg_views": 3
+    },
     "caseoh_": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 3
     },
     "ishowspeed": {
       "videos": 2,
-      "avg_views": 1
-    },
-    "kaicenat": {
-      "videos": 1,
-      "avg_views": 1
+      "avg_views": 0
     },
     "IShowSpeed": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 0
     },
     "stableronaldo": {
       "videos": 1,
@@ -31,33 +35,45 @@
     }
   },
   "by_hashtag": {
-    "#caseoh": {
-      "videos": 2,
-      "avg_views": 3
-    },
-    "#caseohgta6": {
-      "videos": 1,
-      "avg_views": 0
-    },
     "#gaming": {
-      "videos": 6,
+      "videos": 10,
       "avg_views": 1
     },
     "#gta6": {
-      "videos": 9,
-      "avg_views": 35
+      "videos": 13,
+      "avg_views": 25
     },
     "#gta6funnymoments": {
-      "videos": 6,
+      "videos": 10,
       "avg_views": 1
     },
     "#gtavi": {
-      "videos": 9,
-      "avg_views": 35
+      "videos": 13,
+      "avg_views": 25
+    },
+    "#kaicenat": {
+      "videos": 4,
+      "avg_views": 2
     },
     "#shorts": {
-      "videos": 9,
-      "avg_views": 35
+      "videos": 13,
+      "avg_views": 25
+    },
+    "#jason": {
+      "videos": 1,
+      "avg_views": 2
+    },
+    "#lacy": {
+      "videos": 2,
+      "avg_views": 3
+    },
+    "#caseoh": {
+      "videos": 2,
+      "avg_views": 4
+    },
+    "#caseohgta6": {
+      "videos": 1,
+      "avg_views": 3
     },
     "#ishowspeed": {
       "videos": 1,
@@ -65,15 +81,11 @@
     },
     "#speed": {
       "videos": 3,
-      "avg_views": 1
-    },
-    "#kaicenat": {
-      "videos": 2,
-      "avg_views": 2
+      "avg_views": 0
     },
     "#gtav": {
       "videos": 2,
-      "avg_views": 1
+      "avg_views": 0
     },
     "#stableronaldo": {
       "videos": 1,
@@ -81,13 +93,32 @@
     },
     "#twitch": {
       "videos": 3,
-      "avg_views": 104
+      "avg_views": 103
     },
     "#jynxzi": {
       "videos": 1,
-      "avg_views": 301
+      "avg_views": 300
     }
   },
-  "by_length": {},
+  "by_length": {
+    "20-30s": {
+      "videos": 1,
+      "max": 30,
+      "avg_pct_watched": 0.0,
+      "avg_views": 0
+    },
+    "30-40s": {
+      "videos": 1,
+      "max": 40,
+      "avg_pct_watched": 0.0,
+      "avg_views": 0
+    },
+    "40s+": {
+      "videos": 5,
+      "max": 999,
+      "avg_pct_watched": 29.3,
+      "avg_views": 62
+    }
+  },
   "date": "2026-11-24"
 }
