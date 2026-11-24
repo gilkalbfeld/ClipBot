@@ -74,5 +74,20 @@
     "status": "library",
     "reason": "Not YouTube-safe: Discusses real-life homicide and someone getting life in prison for throwing stuff off a bridge, which violates real-life violence rules.",
     "at": "2026-11-23T20:09:43+00:00"
+  },
+  "ohnepixel_20261119_174705": {
+    "status": "library",
+    "reason": "Not YouTube-safe: swearing/slurs in the audio (AI check unavailable)",
+    "at": "2026-11-24T14:09:23+00:00"
+  },
+  "lacy_20261124_103125": {
+    "status": "library",
+    "reason": "Not YouTube-safe: Sexual content and dialogue as the focus involving masturbation references.",
+    "at": "2026-11-24T14:09:26+00:00"
+  },
+  "lacy_20261119_174822": {
+    "status": "library",
+    "reason": "Not YouTube-safe: swearing/slurs in the audio (AI check unavailable)",
+    "at": "2026-11-24T14:10:31+00:00"
   }
 }
