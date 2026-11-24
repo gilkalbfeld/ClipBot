@@ -101,5 +101,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-23T23:09:44+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45286244957"
+  },
+  "autopost_45306459294": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Kai Cenat gets dominated by a crazy NPC in GTA 6 💀” → https://youtube.com/shorts/JiBWkR326NU",
+    "finished_at": "2026-11-24T01:38:36+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45306459294"
   }
 }
