@@ -176,5 +176,12 @@
     "message": "Posted “Why did Lacy call this injured NPC a handsome overweight young man? 💀” → https://youtube.com/shorts/r-LPFgJLUBE",
     "finished_at": "2026-11-25T02:09:38+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45530836141"
+  },
+  "autopost_45551675380": {
+    "kind": "post",
+    "status": "done",
+    "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
+    "finished_at": "2026-11-25T05:10:54+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45551675380"
   }
 }
