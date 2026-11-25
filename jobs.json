@@ -183,5 +183,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-25T05:10:54+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45551675380"
+  },
+  "autopost_45602000829": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Speed almost dies to a giant alligator in the swamp 🐊” → https://youtube.com/shorts/K6jJqwiq8LA",
+    "finished_at": "2026-11-25T11:11:39+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45602000829"
   }
 }
