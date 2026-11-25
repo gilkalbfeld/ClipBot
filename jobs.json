@@ -211,5 +211,12 @@
     "message": "Posted “Kai Cenat tells Jason to put the wrench down 🔧” → https://youtube.com/shorts/bXtl8YeoV_Q",
     "finished_at": "2026-11-25T20:10:13+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45692140458"
+  },
+  "autopost_45718285708": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Jynxzi mocked his wingspan and got folded 💀” → https://youtube.com/shorts/wcObRLd_4gg",
+    "finished_at": "2026-11-25T23:04:04+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45718285708"
   }
 }
