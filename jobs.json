@@ -164,7 +164,10 @@
     "title": "This GTA 6 moment broke Jynxzi 💀",
     "label": "Start +14s · end +6s",
     "kind": "edit",
-    "status": "running",
-    "started_at": "2026-11-25T00:22:20+00:00"
+    "status": "done",
+    "started_at": "2026-11-25T00:22:20+00:00",
+    "message": "Re-cut done — new version is 44s long",
+    "finished_at": "2026-11-25T00:27:00+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45517565364"
   }
 }
