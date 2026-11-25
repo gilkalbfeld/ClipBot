@@ -758,5 +758,12 @@
     "streamer": "",
     "source": "Scheduled",
     "at": "2026-11-23T06:21:21+00:00"
+  },
+  "kaicenat_20261124_225153": {
+    "rating": -1,
+    "comment": "",
+    "streamer": "kaicenat",
+    "source": "Scheduled",
+    "at": "2026-11-25T00:11:58+00:00"
   }
 }
