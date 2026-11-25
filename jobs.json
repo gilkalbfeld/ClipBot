@@ -197,5 +197,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-25T14:11:01+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45631012288"
+  },
+  "autopost_45661542508": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Why did Lacy immediately take a picture of this NPC? 📸” → https://youtube.com/shorts/adW6jqlVIeY",
+    "finished_at": "2026-11-25T17:09:35+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45661542508"
   }
 }

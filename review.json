@@ -94,5 +94,15 @@
     "status": "library",
     "reason": "Not YouTube-safe: Sexual dialogue/phrases as the focus with explicit references ('Get into that dick, bro', 'Clean your dick')",
     "at": "2026-11-24T23:10:37+00:00"
+  },
+  "xqc_20261125_091657": {
+    "status": "library",
+    "reason": "Not YouTube-safe: Contains the f-slur and heavy swearing in the transcript/title focus.",
+    "at": "2026-11-25T17:09:20+00:00"
+  },
+  "lacy_20261119_035536": {
+    "status": "library",
+    "reason": "Not YouTube-safe: Contains a derogatory slur ('retarded')",
+    "at": "2026-11-25T17:09:25+00:00"
   }
 }
