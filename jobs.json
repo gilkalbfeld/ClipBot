@@ -246,5 +246,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-26T15:03:18+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45845050768"
+  },
+  "autopost_45864903075": {
+    "kind": "post",
+    "status": "done",
+    "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
+    "finished_at": "2026-11-26T17:07:41+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45864903075"
   }
 }
