@@ -23,6 +23,7 @@ BANGER = 9             # posts even if the daily limit is reached...
 HARD_CAP = 10          # ...but never more than this many posts in 24h
 MIN_SCORE = 8          # "bangers only" for clips you didn't approve
 FALLBACK_SCORE = 7     # used only if there are no 8+ clips left
+PROVEN_VIEWS = 5000   # Twitch clips with this many views are proven bangers
 
 
 def load(path, default):
@@ -69,7 +70,8 @@ def main():
     if len(done_today) >= HARD_CAP:
         print("Hard cap reached")
         return
-    last_streamer = max(posted.values(), key=lambda v: v.get("posted_at", ""), default={}).get("streamer", "")
+    recent = sorted(posted.values(), key=lambda v: v.get("posted_at", ""))[-3:]
+    recent_streamers = {(v.get("streamer") or "").lower() for v in recent}
 
     cands = []
     for c in clips():
@@ -80,11 +82,14 @@ def main():
         score = info.get("ai_score") or 0
         if status != "approved" and score < FALLBACK_SCORE:
             continue
-        rank = (status == "approved", (info.get("streamer") or "") != last_streamer, score, cid)
+        # proven = already went viral on Twitch (thousands of views) — the guide's "repost what performs"
+        proven = (info.get("views") or 0) >= PROVEN_VIEWS
+        fresh = (info.get("streamer") or "").lower() not in recent_streamers   # switch it up
+        rank = (status == "approved", fresh, proven, score, info.get("views") or 0, cid)
         cands.append((rank, c))
     cands.sort(key=lambda x: x[0], reverse=True)
-    if any(r[0] or r[2] >= MIN_SCORE for r, _ in cands):   # prefer approved / 8+; 7s only if nothing better
-        cands = [(r, c) for r, c in cands if r[0] or r[2] >= MIN_SCORE]
+    if any(r[0] or r[2] or r[3] >= MIN_SCORE for r, _ in cands):   # prefer approved / 8+; 7s only if nothing better
+        cands = [(r, c) for r, c in cands if r[0] or r[2] or r[3] >= MIN_SCORE]
     if over_limit:   # daily limit hit: only true bangers get through
         cands = [(r, c) for r, c in cands if (c["info"].get("ai_score") or 0) >= BANGER]
         print(f"Daily limit reached — {len(cands)} banger(s) (9+) can still go out")

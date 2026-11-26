@@ -13,7 +13,8 @@ CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GAME_NAMES = ["Grand Theft Auto VI", "Grand Theft Auto V"]
 
 # Big streamers: we always check their clips (edit anytime)
-FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross", "lacy", "jynxzi"]
+FAMOUS_STREAMERS = ["kaicenat", "xqc", "ishowspeed", "summit1g", "adinross", "lacy", "jynxzi", "caseoh_",
+                    "stableronaldo", "zackrawrr", "shroud", "ninja", "valkyrae", "n3on"]
 
 # Favorites get pushed up the list (score x this number)
 FAVORITES = {"ishowspeed": 3, "jynxzi": 3, "lacy": 2}

@@ -46,7 +46,7 @@ menus, "be right back" screen, or chat hype about something off-screen.
 Reply ONLY with JSON:
 {{"score": 1-10 (7+ = would go viral-ish, 5 = mid, 1-3 = nothing happens),
   "reason": "max 12 words, what happens",
-  "moment_start": seconds where the setup of the moment starts,
+  "moment_start": seconds where the setup of the moment starts — keep it SHORT so something grabby happens in the first ~2 seconds,
   "moment_end": seconds where the reaction/payoff is over,
   "problems": list from ["nothing_happens","calm_talking","ad_break","loading_or_menu","offscreen","too_long_setup","cut_off"],
   "title": "YouTube Shorts title about what ACTUALLY happens in this clip. Specific, punchy, max 70 chars,
@@ -148,7 +148,7 @@ Based on what the streamer says and reacts to, reply ONLY with JSON:
             Don't reuse these recent titles' wording: {avoid}",
   "summary": "2-3 plain sentences on what happens (characters like Jason/Lucia, places, cars, actions, quotes). For search.",
   "tags": ["5-8 short search tags"],
-  "moment_start": seconds (from the transcript times) where the setup of the best moment starts,
+  "moment_start": seconds (from the transcript times) where the setup of the best moment starts — keep the setup SHORT: the payoff or a strong line must land within ~2 seconds of the start, cut slow build-up,
   "moment_end": seconds where the reaction/payoff is over,
   "captions": true if the STREAMER's own talking/reaction is the main thing; false if it's mostly in-game
               dialogue/cutscene (the game already shows subtitles) or there's barely any speech,

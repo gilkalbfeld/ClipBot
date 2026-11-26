@@ -19,13 +19,15 @@ RULES = """YouTube Community Guidelines + advertiser-friendly rules for a GTA 6 
 NOT OK (reject): nudity or sexual content/acts (incl. in-game strip clubs with visible nudity, sexual dialogue as the
 focus), slurs or hate speech said by anyone (n-word, f-slur, etc.), harassment of a real person, real-life violence
 or injuries, self-harm talk, minors in risky situations, dangerous real-world acts, doxxing / personal info,
-drugs being used for real, scams, misleading clickbait.
+drugs being used for real, scams, misleading clickbait, ANY gambling (real or in-game casino, slots, roulette,
+blackjack, betting, sportsbooks, gambling sponsors like Stake on screen or mentioned).
 CAUTION (allowed only if brief and not the focus): heavy swearing, in-game sexual jokes, in-game drug content.
 OK: normal GTA violence, guns, crimes, robberies, in-game drug missions, crashes, police chases, rage/screaming,
 banter, swearing in the audio, funny NPC moments, and naming the real streamer in the title (that's normal credit).
 If the ONLY problem is swearing or a sketchy word in the TITLE, mark it safe and rewrite the title clean."""
 
 
+GAMBLING = re.compile(r"\b(casino|slots?|stake\.com|roulette|blackjack|sportsbook|sportsbet\w*|gambl\w*)\b", re.I)
 PREFIX = {"fuck", "shit", "nigg", "fag", "retard", "porn", "bitch"}   # match words starting with these
 PATTERNS = [re.compile((r"\b" + re.escape(w) + r"\w*") if w in PREFIX else (r"\b" + re.escape(w) + r"s?\b"), re.I)
             for w in BANNED_WORDS]
@@ -77,6 +79,6 @@ Reply ONLY with JSON: {{"safe": true/false, "reason": "short reason if unsafe",
             result["title"] = safe_title(v.get("title") or title)
             return result
     # couldn't reach the AI: only post if nothing obviously bad is said
-    result["safe"] = text_is_clean(transcript) and text_is_clean(title)
+    result["safe"] = text_is_clean(transcript) and text_is_clean(title) and not GAMBLING.search(title)
     result["reason"] = "" if result["safe"] else "swearing/slurs in the audio (AI check unavailable)"
     return result

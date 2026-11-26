@@ -33,6 +33,11 @@ WATCHLIST = [
     {"name": "caseoh_", "platform": "twitch"},
     {"name": "adinross", "platform": "twitch"},
     {"name": "ohnepixel", "platform": "twitch"},
+    {"name": "stableronaldo", "platform": "twitch"},
+    {"name": "zackrawrr", "platform": "twitch"},
+    {"name": "shroud", "platform": "twitch"},
+    {"name": "valkyrae", "platform": "twitch"},
+    {"name": "ninja", "platform": "twitch"},
 ]
 TWITCH_GTA_ONLY = True     # Twitch: only record when they're in a GTA category
 MAX_STREAMS = 4            # how many streams to record at once
