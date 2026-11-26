@@ -4,26 +4,34 @@
     "title": "ViceClips",
     "published": "2024-11-04",
     "subscribers": 0,
-    "views": 306,
-    "videos": 19,
+    "views": 327,
+    "videos": 22,
     "uploads": "UUhj5nhgpFx9zMNc6R96ELHg"
   },
   "by_streamer": {
+    "caseoh_": {
+      "videos": 3,
+      "avg_views": 0
+    },
+    "ohnepixel": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "ZoReee": {
+      "videos": 1,
+      "avg_views": 0
+    },
     "WoolieVersus": {
       "videos": 1,
-      "avg_views": 1
-    },
-    "caseoh_": {
-      "videos": 2,
       "avg_views": 0
     },
     "jynxzi": {
       "videos": 1,
-      "avg_views": 2
+      "avg_views": 0
     },
     "kaicenat": {
       "videos": 3,
-      "avg_views": 2
+      "avg_views": 1
     },
     "lacy": {
       "videos": 4,
@@ -43,53 +51,65 @@
     }
   },
   "by_hashtag": {
-    "#gaming": {
-      "videos": 16,
+    "#caseoh": {
+      "videos": 4,
       "avg_views": 2
     },
-    "#glitch": {
-      "videos": 1,
+    "#gaming": {
+      "videos": 19,
       "avg_views": 1
     },
     "#gta6": {
-      "videos": 19,
-      "avg_views": 18
+      "videos": 22,
+      "avg_views": 15
     },
     "#gta6funnymoments": {
-      "videos": 16,
-      "avg_views": 2
+      "videos": 19,
+      "avg_views": 1
     },
     "#gtavi": {
-      "videos": 19,
-      "avg_views": 18
+      "videos": 22,
+      "avg_views": 15
     },
     "#shorts": {
-      "videos": 19,
-      "avg_views": 18
+      "videos": 22,
+      "avg_views": 15
+    },
+    "#gta6clips": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "#ohnepixel": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "#gta6funny": {
+      "videos": 2,
+      "avg_views": 0
+    },
+    "#zoreee": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "#glitch": {
+      "videos": 1,
+      "avg_views": 0
     },
     "#woolieversus": {
       "videos": 1,
-      "avg_views": 1
-    },
-    "#caseoh": {
-      "videos": 3,
-      "avg_views": 3
+      "avg_views": 0
     },
     "#jynxzi": {
       "videos": 2,
-      "avg_views": 152
+      "avg_views": 150
     },
     "#jynxzigta6": {
       "videos": 1,
-      "avg_views": 2
+      "avg_views": 0
     },
     "#kaicenat": {
       "videos": 4,
-      "avg_views": 3
-    },
-    "#gta6funny": {
-      "videos": 1,
-      "avg_views": 7
+      "avg_views": 2
     },
     "#lacy": {
       "videos": 4,
@@ -97,7 +117,7 @@
     },
     "#ishowspeed": {
       "videos": 2,
-      "avg_views": 2
+      "avg_views": 0
     },
     "#speed": {
       "videos": 4,
@@ -105,15 +125,15 @@
     },
     "#gta6gameplay": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 0
     },
     "#jason": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 3
     },
     "#caseohgta6": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 1
     },
     "#gtav": {
       "videos": 2,
@@ -125,10 +145,16 @@
     },
     "#twitch": {
       "videos": 3,
-      "avg_views": 104
+      "avg_views": 103
     }
   },
   "by_length": {
+    "under_20s": {
+      "videos": 1,
+      "max": 20,
+      "avg_pct_watched": 105.7,
+      "avg_views": 2
+    },
     "20-30s": {
       "videos": 1,
       "max": 30,
@@ -142,10 +168,10 @@
       "avg_views": 1
     },
     "40s+": {
-      "videos": 6,
+      "videos": 9,
       "max": 999,
-      "avg_pct_watched": 35.0,
-      "avg_views": 53
+      "avg_pct_watched": 31.4,
+      "avg_views": 36
     }
   },
   "date": "2026-11-26"
