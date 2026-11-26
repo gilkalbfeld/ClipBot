@@ -253,5 +253,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-26T17:07:41+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45864903075"
+  },
+  "autopost_45881890162": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Why did ohnePixel just yell Mommy at a kid? 😱” → https://youtube.com/shorts/lN4qxfLkQkI",
+    "finished_at": "2026-11-26T19:13:24+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45881890162"
   }
 }
