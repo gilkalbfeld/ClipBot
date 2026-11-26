@@ -239,5 +239,12 @@
     "message": "Posted “zoreee got absolutely Looney Tuned by an underpass 💀” → https://youtube.com/shorts/kOFtSxxJ5pE",
     "finished_at": "2026-11-26T14:08:30+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45835820257"
+  },
+  "autopost_45845050768": {
+    "kind": "post",
+    "status": "done",
+    "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
+    "finished_at": "2026-11-26T15:03:18+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45845050768"
   }
 }
