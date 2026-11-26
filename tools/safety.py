@@ -77,6 +77,8 @@ Reply ONLY with JSON: {{"safe": true/false, "reason": "short reason if unsafe",
             result["safe"] = bool(v.get("safe", False))
             result["reason"] = v.get("reason", "")
             result["title"] = safe_title(v.get("title") or title)
+            if GAMBLING.search(result["title"]):
+                result["safe"], result["reason"] = False, "gambling"
             return result
     # couldn't reach the AI: only post if nothing obviously bad is said
     result["safe"] = text_is_clean(transcript) and text_is_clean(title) and not GAMBLING.search(title)
