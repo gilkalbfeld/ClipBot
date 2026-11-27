@@ -5246,5 +5246,93 @@
     "caption_words": 4,
     "source_url": "https://www.twitch.tv/ishowspeed/clip/DifferentImpossibleSushiHumbleLife-2oIIYfJqHjMo4iDy",
     "platform": "twitch"
+  },
+  "800347727": {
+    "youtube_title": "Why did banksatkin tell chat to clip this? 🚗",
+    "youtube_description": "Why did banksatkin tell chat to clip this? 🚗\n\n🎮 Clip from twitch.tv/banksatkin — go show them love!\nOriginal: https://www.twitch.tv/banksatkin/clip/LazyRoundKaleOMGScoots-S7r-zxD3lJawPNcQ\n\nFollow ViceClips for the best GTA 6 clips every day 🌴\n\n#gta6 #gtavi #shorts #banksatkin #gta6funnymoments #gaming",
+    "youtube_tags": [
+      "gta 6",
+      "gta vi",
+      "gta 6 funny moments",
+      "BanksAtkin",
+      "BanksAtkin gta 6",
+      "twitch clips"
+    ],
+    "ai_score": 6.0,
+    "ai_reason": "Streamer witnesses a glitch and tells chat to clip it.",
+    "ai_summary": "Streamer banksatkin reacts to a sudden glitch while playing GTA 6. He immediately notices the weird moment and tells someone in chat to clip it.",
+    "ai_tags": [
+      "gta 6",
+      "gta vi",
+      "banksatkin",
+      "gta glitch",
+      "twitch streamer",
+      "gta funny moments",
+      "gta 6 gameplay"
+    ],
+    "hook": "HEY SOMEBODY CLIPPED IT",
+    "streamer": "BanksAtkin",
+    "layout": "bars",
+    "caption_words": 3,
+    "source_url": "https://www.twitch.tv/banksatkin/clip/LazyRoundKaleOMGScoots-S7r-zxD3lJawPNcQ",
+    "platform": "twitch"
+  },
+  "800347700": {
+    "youtube_title": "xalisa realized what she just said on stream... 💀",
+    "youtube_description": "xalisa realized what she just said on stream... 💀\n\n🎮 Clip from twitch.tv/xalisa — go show them love!\nOriginal: https://www.twitch.tv/xalisa/clip/BelovedCleanMonitorArsonNoSexy-fopKLMmGJCBntQsU\n\nFollow ViceClips for the best GTA 6 clips every day 🌴\n\n#gta6 #gtavi #shorts #xalisa #gta6funny #gta6funnymoments #gaming",
+    "youtube_tags": [
+      "gta 6",
+      "gta vi",
+      "gta 6 funny moments",
+      "xAlisa",
+      "xAlisa gta 6",
+      "twitch clips"
+    ],
+    "ai_score": 6.0,
+    "ai_reason": "Streamer accidentally says something terrible on stream and instantly regrets it.",
+    "ai_summary": "Streamer xalisa accidentally says a very bad slur while talking about her mom in-game. She immediately realizes how terrible it sounds and backtracks in panic.",
+    "ai_tags": [
+      "xalisa",
+      "gta 6",
+      "gta 6 funny",
+      "twitch streamer",
+      "gta 6 moments",
+      "xalisa gta"
+    ],
+    "hook": "THAT SOUNDS REALLY BAD",
+    "streamer": "xAlisa",
+    "layout": "blur",
+    "caption_words": 3,
+    "source_url": "https://www.twitch.tv/xalisa/clip/BelovedCleanMonitorArsonNoSexy-fopKLMmGJCBntQsU",
+    "platform": "twitch"
+  },
+  "800347720": {
+    "youtube_title": "ohnePixel questions a YouTube recording 💀",
+    "youtube_description": "ohnePixel questions a YouTube recording 💀\n\n🎮 Clip from twitch.tv/ohnepixel — go show them love!\nOriginal: https://www.twitch.tv/ohnepixel/clip/SpunkyPlayfulSandwichDerp-jm59fy00oJ0LBAf6\n\nFollow ViceClips for the best GTA 6 clips every day 🌴\n\n#gta6 #gtavi #shorts #ohnepixel #twitch #gta6funnymoments #gaming",
+    "youtube_tags": [
+      "gta 6",
+      "gta vi",
+      "gta 6 funny moments",
+      "ohnePixel",
+      "ohnePixel gta 6",
+      "twitch clips"
+    ],
+    "ai_score": 6.0,
+    "ai_reason": "ohnePixel gets confused about recording and mentions Mr. Hands.",
+    "ai_summary": "ohnePixel is confused during a stream, mentioning Dubai and making a surprising reference to Mr. Hands while wondering if they are recording for YouTube.",
+    "ai_tags": [
+      "ohnePixel",
+      "gta 6",
+      "twitch",
+      "streamer",
+      "funny",
+      "gaming"
+    ],
+    "hook": "WAIT ARE WE RECORDING",
+    "streamer": "ohnePixel",
+    "layout": "blur",
+    "caption_words": 3,
+    "source_url": "https://www.twitch.tv/ohnepixel/clip/SpunkyPlayfulSandwichDerp-jm59fy00oJ0LBAf6",
+    "platform": "twitch"
   }
 }
