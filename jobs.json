@@ -281,5 +281,12 @@
     "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
     "finished_at": "2026-11-27T01:00:07+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45919936942"
+  },
+  "autopost_45929855931": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Dunc threatens to crumple chat up like paper 📄” → https://youtube.com/shorts/epFsh1EhyBQ",
+    "finished_at": "2026-11-27T02:42:44+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45929855931"
   }
 }
