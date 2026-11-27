@@ -323,5 +323,12 @@
     "message": "Posted “What is Lucie doing down there, Jynxzi?! 😭” → https://youtube.com/shorts/Sia9Y5SGuKc",
     "finished_at": "2026-11-27T20:10:13+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46061674299"
+  },
+  "autopost_46068394540": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “SypherPK hears the wildest NPC quote in GTA 6 💀” → https://youtube.com/shorts/p5XoQsZzKbo",
+    "finished_at": "2026-11-27T21:10:09+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46068394540"
   }
 }
