@@ -4,11 +4,23 @@
     "title": "ViceClips",
     "published": "2024-11-04",
     "subscribers": 0,
-    "views": 327,
-    "videos": 22,
+    "views": 306,
+    "videos": 26,
     "uploads": "UUhj5nhgpFx9zMNc6R96ELHg"
   },
   "by_streamer": {
+    "LIRIK": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "Dunc": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "Tminnzy": {
+      "videos": 1,
+      "avg_views": 0
+    },
     "caseoh_": {
       "videos": 3,
       "avg_views": 0
@@ -51,29 +63,57 @@
     }
   },
   "by_hashtag": {
-    "#caseoh": {
-      "videos": 4,
-      "avg_views": 2
-    },
     "#gaming": {
-      "videos": 19,
+      "videos": 23,
       "avg_views": 1
     },
     "#gta6": {
-      "videos": 22,
-      "avg_views": 15
+      "videos": 26,
+      "avg_views": 12
     },
     "#gta6funnymoments": {
-      "videos": 19,
+      "videos": 23,
       "avg_views": 1
     },
+    "#gta6funnynpc": {
+      "videos": 1,
+      "avg_views": 0
+    },
     "#gtavi": {
-      "videos": 22,
-      "avg_views": 15
+      "videos": 26,
+      "avg_views": 12
+    },
+    "#ishowspeed": {
+      "videos": 3,
+      "avg_views": 0
     },
     "#shorts": {
-      "videos": 22,
-      "avg_views": 15
+      "videos": 26,
+      "avg_views": 12
+    },
+    "#speed": {
+      "videos": 5,
+      "avg_views": 1
+    },
+    "#lirik": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "#dunc": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "#gta6funny": {
+      "videos": 4,
+      "avg_views": 0
+    },
+    "#tminnzy": {
+      "videos": 1,
+      "avg_views": 0
+    },
+    "#caseoh": {
+      "videos": 4,
+      "avg_views": 2
     },
     "#gta6clips": {
       "videos": 1,
@@ -81,10 +121,6 @@
     },
     "#ohnepixel": {
       "videos": 1,
-      "avg_views": 0
-    },
-    "#gta6funny": {
-      "videos": 2,
       "avg_views": 0
     },
     "#zoreee": {
@@ -114,14 +150,6 @@
     "#lacy": {
       "videos": 4,
       "avg_views": 2
-    },
-    "#ishowspeed": {
-      "videos": 2,
-      "avg_views": 0
-    },
-    "#speed": {
-      "videos": 4,
-      "avg_views": 1
     },
     "#gta6gameplay": {
       "videos": 1,
@@ -170,9 +198,9 @@
     "40s+": {
       "videos": 9,
       "max": 999,
-      "avg_pct_watched": 31.4,
+      "avg_pct_watched": 32.9,
       "avg_views": 36
     }
   },
-  "date": "2026-11-26"
+  "date": "2026-11-27"
 }
