@@ -302,5 +302,12 @@
     "message": "Posted “Speed encounters a delusional NPC in GTA 6 💀” → https://youtube.com/shorts/BrtOEL6yFBI",
     "finished_at": "2026-11-27T10:47:39+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/45984968477"
+  },
+  "autopost_46012786908": {
+    "kind": "post",
+    "status": "done",
+    "message": "No YouTube-safe clips ready to post — approve some or run Find clips",
+    "finished_at": "2026-11-27T14:06:30+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46012786908"
   }
 }
