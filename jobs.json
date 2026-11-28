@@ -358,5 +358,12 @@
     "message": "Posted “CaseOh roasts an NPC after a wild pineapple argument 🍍” → https://youtube.com/shorts/dSFJD9_ejhY",
     "finished_at": "2026-11-28T14:07:20+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46152952326"
+  },
+  "autopost_46168970560": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “Speed claims he's Lewis Hamilton in GTA 6 🏎️” → https://youtube.com/shorts/T2UsG5o-Pto",
+    "finished_at": "2026-11-28T17:10:23+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46168970560"
   }
 }
