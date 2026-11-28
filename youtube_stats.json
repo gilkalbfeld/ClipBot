@@ -4,14 +4,18 @@
     "title": "ViceClips",
     "published": "2024-11-04",
     "subscribers": 0,
-    "views": 306,
-    "videos": 28,
+    "views": 318,
+    "videos": 30,
     "uploads": "UUhj5nhgpFx9zMNc6R96ELHg"
   },
   "by_streamer": {
-    "SypherPK": {
-      "videos": 1,
-      "avg_views": 0
+    "kaicenat": {
+      "videos": 4,
+      "avg_views": 1
+    },
+    "jynxzi": {
+      "videos": 2,
+      "avg_views": 2
     },
     "Jynxzi": {
       "videos": 1,
@@ -19,15 +23,15 @@
     },
     "LIRIK": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 2
     },
     "Dunc": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 2
     },
     "Tminnzy": {
       "videos": 1,
-      "avg_views": 2
+      "avg_views": 3
     },
     "caseoh_": {
       "videos": 3,
@@ -45,59 +49,63 @@
       "videos": 1,
       "avg_views": 0
     },
-    "jynxzi": {
-      "videos": 1,
-      "avg_views": 2
-    },
-    "kaicenat": {
-      "videos": 3,
-      "avg_views": 2
-    },
     "lacy": {
       "videos": 4,
       "avg_views": 3
     },
     "ishowspeed": {
       "videos": 3,
-      "avg_views": 1
+      "avg_views": 0
     },
     "IShowSpeed": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 0
     },
     "stableronaldo": {
       "videos": 1,
-      "avg_views": 2
+      "avg_views": 1
     }
   },
   "by_hashtag": {
+    "#caseoh": {
+      "videos": 5,
+      "avg_views": 1
+    },
     "#gaming": {
-      "videos": 25,
+      "videos": 27,
       "avg_views": 1
     },
     "#gta6": {
-      "videos": 28,
-      "avg_views": 12
+      "videos": 30,
+      "avg_views": 11
     },
     "#gta6funnymoments": {
-      "videos": 25,
+      "videos": 27,
       "avg_views": 1
     },
     "#gtavi": {
-      "videos": 28,
-      "avg_views": 12
+      "videos": 30,
+      "avg_views": 11
     },
     "#shorts": {
-      "videos": 28,
-      "avg_views": 12
+      "videos": 30,
+      "avg_views": 11
     },
-    "#sypherpk": {
+    "#kaicenat": {
+      "videos": 5,
+      "avg_views": 1
+    },
+    "#cranetruck": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 2
+    },
+    "#flyingglitch": {
+      "videos": 1,
+      "avg_views": 2
     },
     "#jynxzi": {
-      "videos": 3,
-      "avg_views": 101
+      "videos": 4,
+      "avg_views": 76
     },
     "#lucie": {
       "videos": 1,
@@ -105,7 +113,7 @@
     },
     "#gta6funnynpc": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 2
     },
     "#ishowspeed": {
       "videos": 3,
@@ -117,23 +125,19 @@
     },
     "#lirik": {
       "videos": 1,
-      "avg_views": 0
+      "avg_views": 2
     },
     "#dunc": {
       "videos": 1,
-      "avg_views": 1
+      "avg_views": 2
     },
     "#gta6funny": {
       "videos": 4,
-      "avg_views": 2
+      "avg_views": 3
     },
     "#tminnzy": {
       "videos": 1,
-      "avg_views": 2
-    },
-    "#caseoh": {
-      "videos": 4,
-      "avg_views": 2
+      "avg_views": 3
     },
     "#gta6clips": {
       "videos": 1,
@@ -159,10 +163,6 @@
       "videos": 1,
       "avg_views": 2
     },
-    "#kaicenat": {
-      "videos": 4,
-      "avg_views": 2
-    },
     "#lacy": {
       "videos": 4,
       "avg_views": 3
@@ -181,15 +181,15 @@
     },
     "#gtav": {
       "videos": 2,
-      "avg_views": 2
+      "avg_views": 0
     },
     "#stableronaldo": {
       "videos": 1,
-      "avg_views": 2
+      "avg_views": 1
     },
     "#twitch": {
       "videos": 3,
-      "avg_views": 103
+      "avg_views": 102
     }
   },
   "by_length": {
@@ -202,21 +202,21 @@
     "20-30s": {
       "videos": 3,
       "max": 30,
-      "avg_pct_watched": 71.5,
+      "avg_pct_watched": 45.8,
       "avg_views": 1
     },
     "30-40s": {
-      "videos": 4,
+      "videos": 3,
       "max": 40,
-      "avg_pct_watched": 26.0,
+      "avg_pct_watched": 27.8,
       "avg_views": 1
     },
     "40s+": {
       "videos": 11,
       "max": 999,
-      "avg_pct_watched": 68.9,
-      "avg_views": 30
+      "avg_pct_watched": 58.9,
+      "avg_views": 29
     }
   },
-  "date": "2026-11-27"
+  "date": "2026-11-28"
 }
