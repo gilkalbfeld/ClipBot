@@ -1,13 +1,13 @@
 {
-  "updated": "2026-11-27T21:36:52+00:00",
+  "updated": "2026-11-28T00:19:57+00:00",
   "ratings": 102,
   "streamer_weight": {
-    "lacy": 0.6,
+    "lacy": 0.51,
     "jynxzi": 3,
     "xqc": 0.3,
-    "kaicenat": 0.3,
-    "caseoh_": 0.25,
-    "ishowspeed": 0.75
+    "kaicenat": 0.34,
+    "caseoh_": 0.29,
+    "ishowspeed": 0.43
   },
   "spike_mult": {
     "lacy": 1.3,
@@ -38,9 +38,12 @@
     "'bars' layout gets the most \ud83d\udc4d \u2014 using it more",
     "1 comment(s) about commercial breaks \u2014 ads are now skipped when recording Twitch",
     "caseoh_'s videos get fewer views on YouTube \u2014 lower priority",
-    "lacy's videos get 2.0x your average views on YouTube \u2014 prioritising them",
+    "lacy's videos get 1.7x your average views on YouTube \u2014 prioritising them",
+    "ishowspeed's videos get fewer views on YouTube \u2014 lower priority",
+    "Shorts up to 50s hold viewers best on your channel \u2014 cutting clips to that",
     "You told me: min_ai_score = 9"
   ],
+  "max_len": 50,
   "min_ai_score": 9,
   "rules": [
     "Never clip streamers when they are off-game or on commercial breaks.",
