@@ -351,5 +351,12 @@
     "message": "Posted “Kai Cenat gets caught by his GTA 6 girlfriend at the Rusty Anchor 🍸” → https://youtube.com/shorts/Piusq5Ah85c",
     "finished_at": "2026-11-28T04:42:45+00:00",
     "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46108742354"
+  },
+  "autopost_46152952326": {
+    "kind": "post",
+    "status": "done",
+    "message": "Posted “CaseOh roasts an NPC after a wild pineapple argument 🍍” → https://youtube.com/shorts/dSFJD9_ejhY",
+    "finished_at": "2026-11-28T14:07:20+00:00",
+    "run_url": "https://github.com/gilkalbfeld/ClipBot/actions/runs/46152952326"
   }
 }
